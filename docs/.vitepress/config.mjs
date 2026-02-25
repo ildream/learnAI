@@ -3,7 +3,7 @@ import { defineConfig } from 'vitepress'
 export default defineConfig({
   title: "Jay's Knowledge Base",
   description: "AI 学习笔记 & 技术知识库",
-  base: '/learn/',
+  base: '/learnAI/',
   themeConfig: {
     nav: [
       { text: '首页', link: '/' },
@@ -50,7 +50,7 @@ export default defineConfig({
       ],
     },
     socialLinks: [
-      { icon: 'github', link: 'https://github.com/ildream/learn' }
+      { icon: 'github', link: 'https://github.com/ildream/learnAI' }
     ],
     search: {
       provider: 'local'
