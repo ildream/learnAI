@@ -48,6 +48,7 @@ export default withMermaid(defineConfig({
           text: 'AI 工具',
           items: [
             { text: '介绍', link: '/tools/' },
+            { text: 'A股日报系统', link: '/tools/astock-daily' },
           ]
         }
       ],
