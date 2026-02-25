@@ -93,3 +93,9 @@
   font-size: 13px;
   pointer-events: none;
 }
+
+/* 页面底部留白 */
+.VPDoc .content-container,
+.VPDoc .content {
+  padding-bottom: 80px !important;
+}
