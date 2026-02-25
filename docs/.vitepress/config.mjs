@@ -61,5 +61,7 @@ export default withMermaid(defineConfig({
       message: '记录学习，积累成长'
     }
   },
-  mermaid: {},
+  mermaid: {
+    securityLevel: 'loose',
+  },
 }))
