@@ -15,21 +15,21 @@ graph TB
     end
 
     subgraph 本地机器 JayMac
-        B[Gateway 网关\n后台服务 LaunchAgent]
-        C[Agent 智能体\nmain]
-        D[Workspace\n~/.openclaw/workspace]
+        B[Gateway 网关 后台服务 LaunchAgent]
+        C[Agent 智能体 main]
+        D[Workspace ~/.openclaw/workspace]
 
         subgraph 工具 Tools
-            T1[exec\n执行命令]
-            T2[browser\n控制浏览器]
-            T3[memory\n读写记忆]
-            T4[web_search\n搜索网络]
-            T5[message\n发送消息]
+            T1[exec 执行命令]
+            T2[browser 控制浏览器]
+            T3[memory 读写记忆]
+            T4[web_search 搜索网络]
+            T5[message 发送消息]
         end
     end
 
     subgraph AI 模型
-        E[GitHub Copilot\nClaude Sonnet]
+        E[GitHub Copilot Claude Sonnet]
     end
 
     A1 -->|消息| B
@@ -125,14 +125,14 @@ sequenceDiagram
 
 ```mermaid
 graph LR
-    A[每次对话开始] --> B[读取 SOUL.md\nUSER.md\nMEMORY.md]
+    A[每次对话开始] --> B[读取 SOUL.md / USER.md / MEMORY.md]
     B --> C[对话进行中]
     C --> D{有重要信息?}
-    D -->|是| E[写入 memory/今日.md\n或更新 MEMORY.md]
+    D -->|是| E[写入每日日志或更新 MEMORY.md]
     D -->|否| F[对话结束]
     E --> F
 
-    G[Heartbeat 心跳\n每 30 分钟] --> H[自动 push workspace\n到 GitHub]
+    G[Heartbeat 心跳 每30分钟] --> H[自动 push workspace 到 GitHub]
 ```
 
 - **短期记忆**：当前对话的上下文（128k token 窗口内）
@@ -146,17 +146,17 @@ graph LR
 ```mermaid
 graph TB
     subgraph 你的设备
-        Mac[💻 MacBook\nGateway 运行中]
-        Mini[🖥 Mac mini\n同步 workspace]
+        Mac[💻 MacBook Gateway 运行中]
+        Mini[🖥 Mac mini 同步 workspace]
     end
 
     subgraph 聊天渠道
         W[🌐 Web Chat]
-        T[💬 Telegram\n@jay_openClawbot]
+        T[💬 Telegram @jay_openClawbot]
     end
 
     subgraph GitHub
-        Repo[🔒 openclaw-workspace\n私有仓库]
+        Repo[🔒 openclaw-workspace 私有仓库]
     end
 
     W <-->|本地| Mac

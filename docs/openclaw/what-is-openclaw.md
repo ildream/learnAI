@@ -8,8 +8,8 @@
 
 ```mermaid
 graph LR
-    A[🧠 AI 模型\nClaude / GPT] -->|只会思考| B[❌ 没有记忆\n没有工具\n没有渠道]
-    C[🦞 OpenClaw] -->|赋予| D[✅ 记忆\n✅ 工具\n✅ 多渠道\n✅ 持续运行]
+    A[🧠 AI 模型 Claude / GPT] -->|只会思考| B[❌ 没有记忆 没有工具 没有渠道]
+    C[🦞 OpenClaw] -->|赋予| D[✅ 记忆 工具 多渠道 持续运行]
     C -->|调用| A
 ```
 
@@ -38,15 +38,15 @@ OpenClaw Agent：
 ```mermaid
 graph TB
     subgraph OpenClaw 框架
-        A[Gateway 网关\n消息路由 · 后台服务]
-        B[Agent 智能体\n思考 · 记忆 · 决策]
-        C[Tools 工具集\nexec · browser · search...]
-        D[Skills 技能包\n可扩展的能力模块]
-        E[Workspace 工作区\n记忆 · 配置 · 文件]
+        A[Gateway 网关 消息路由 后台服务]
+        B[Agent 智能体 思考 记忆 决策]
+        C[Tools 工具集 exec browser search]
+        D[Skills 技能包 可扩展的能力模块]
+        E[Workspace 工作区 记忆 配置 文件]
     end
 
-    F[AI 模型\nClaude Sonnet / GPT] 
-    G[聊天渠道\nTelegram · Web · WhatsApp]
+    F[AI 模型 Claude Sonnet / GPT]
+    G[聊天渠道 Telegram / Web / WhatsApp]
 
     G <--> A
     A <--> B
