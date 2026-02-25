@@ -1,6 +1,7 @@
 import { defineConfig } from 'vitepress'
+import { withMermaid } from 'vitepress-plugin-mermaid'
 
-export default defineConfig({
+export default withMermaid(defineConfig({
   title: "Jay's Knowledge Base",
   description: "AI 学习笔记 & 技术知识库",
   base: '/learnAI/',
@@ -18,6 +19,7 @@ export default defineConfig({
           text: 'OpenClaw',
           items: [
             { text: '介绍', link: '/openclaw/' },
+            { text: '工作原理', link: '/openclaw/how-it-works' },
             { text: '搭建记录', link: '/openclaw/setup' },
             { text: 'Skills', link: '/openclaw/skills' },
             { text: '使用技巧', link: '/openclaw/tips' },
@@ -59,7 +61,5 @@ export default defineConfig({
       message: '记录学习，积累成长'
     }
   },
-  markdown: {
-    config: (md) => {},
-  }
-})
+  mermaid: {},
+}))
