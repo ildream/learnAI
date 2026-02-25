@@ -8,8 +8,8 @@ export default withMermaid(defineConfig({
   themeConfig: {
     nav: [
       { text: '首页', link: '/' },
-      { text: 'OpenClaw', link: '/openclaw/' },
       { text: 'AI 基础', link: '/ai-fundamentals/' },
+      { text: 'OpenClaw', link: '/openclaw/' },
       { text: 'LLM', link: '/llm/' },
       { text: '工具', link: '/tools/' },
     ],
