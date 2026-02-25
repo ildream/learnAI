@@ -19,6 +19,7 @@ export default withMermaid(defineConfig({
           text: 'OpenClaw',
           items: [
             { text: '介绍', link: '/openclaw/' },
+            { text: 'OpenClaw 是什么？', link: '/openclaw/what-is-openclaw' },
             { text: '工作原理', link: '/openclaw/how-it-works' },
             { text: '搭建记录', link: '/openclaw/setup' },
             { text: 'Skills', link: '/openclaw/skills' },
