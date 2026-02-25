@@ -184,6 +184,78 @@ openclaw cron edit <job-id> --announce --channel feishu
 
 ---
 
+## 实现原理
+
+### 没有代码，只有配置
+
+日报系统**没有任何单独的代码文件**，全部实现存储在一个 JSON 文件里：
+
+```
+~/.openclaw/cron/jobs.json
+```
+
+每个任务的核心结构如下：
+
+```json
+{
+  "id": "6b0dd324-...",
+  "name": "A股早报",
+  "schedule": {
+    "kind": "cron",
+    "expr": "30 8 * * 1-5",
+    "tz": "Asia/Shanghai"
+  },
+  "sessionTarget": "isolated",
+  "payload": {
+    "kind": "agentTurn",
+    "message": "请帮我生成今日A股早报..."
+  },
+  "delivery": {
+    "mode": "announce",
+    "channel": "telegram"
+  }
+}
+```
+
+### 完整执行流程
+
+```mermaid
+sequenceDiagram
+    participant Gateway
+    participant IsolatedSession
+    participant AI
+    participant 财经网站
+    participant Telegram
+
+    Gateway->>Gateway: 检测到 08:30 到达
+    Gateway->>IsolatedSession: 开启独立会话
+    IsolatedSession->>AI: 发送 payload.message 提示词
+    AI->>财经网站: web_fetch 抓取数据
+    财经网站-->>AI: 返回页面内容
+    AI->>AI: 分析整理，生成报告
+    AI->>Telegram: delivery.mode=announce 推送
+    Telegram-->>用户: 收到日报
+```
+
+### 关键字段说明
+
+| 字段 | 值 | 含义 |
+|------|----|------|
+| `schedule.expr` | `30 8 * * 1-5` | Cron 表达式：周一至周五 8:30 |
+| `sessionTarget` | `isolated` | 开独立会话，不影响主聊天记录 |
+| `payload.message` | 提示词文本 | 发给 AI 的指令，告诉它要做什么 |
+| `delivery.mode` | `announce` | 把结果主动推送出去 |
+| `delivery.channel` | `telegram` | 推送到 Telegram |
+
+### 本质
+
+> **日报系统 = 定时器 + 提示词 + 推送**
+>
+> Gateway 在指定时间把提示词发给 AI，AI 去抓取网站数据分析后，把结果推送到 Telegram。
+> OpenClaw 把这整套流程封装成了一行 `cron add` 命令。
+
+---
+
 ## 注意事项
 
 - 数据来源为公开财经网站，适合趋势和热点分析，不适合精确实时价格监控
