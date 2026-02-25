@@ -168,6 +168,56 @@ https://ildream.github.io/learn/
 
 ---
 
+## 六、多台电脑同步 Workspace
+
+使用 GitHub 私有仓库同步两台 Mac 的 OpenClaw 数据（记忆、笔记、配置等）。
+
+### 1. 主机（第一台 Mac）初始化
+
+```bash
+cd ~/.openclaw/workspace
+git init
+git remote add origin https://github.com/ildream/openclaw-workspace.git
+git add .
+git commit -m "init: openclaw workspace"
+git push -u origin main
+```
+
+### 2. 第二台 Mac 克隆
+
+安装好 OpenClaw 之后：
+
+```bash
+# 克隆 workspace
+git clone https://github.com/ildream/openclaw-workspace.git ~/.openclaw/workspace
+
+# 拉取子模块（如 learnAI）
+cd ~/.openclaw/workspace
+git submodule update --init --recursive
+```
+
+### 3. 日常同步
+
+**推送（主机上）：**
+
+```bash
+cd ~/.openclaw/workspace
+git add .
+git commit -m "sync"
+git push
+```
+
+**拉取（第二台 Mac）：**
+
+```bash
+cd ~/.openclaw/workspace
+git pull
+```
+
+> 💡 推荐让 AI 助手定期自动 push，加入 HEARTBEAT 任务即可，无需手动操作。
+
+---
+
 ## 常见问题
 
 **Q: 关闭终端后 Bot 还能用吗？**
