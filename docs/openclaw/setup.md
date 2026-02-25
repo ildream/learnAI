@@ -216,6 +216,83 @@ git pull
 
 > 💡 推荐让 AI 助手定期自动 push，加入 HEARTBEAT 任务即可，无需手动操作。
 
+### 4. 从第二台 Mac 同步回主机
+
+在 Mac mini 上做了改动后，先 push：
+
+```bash
+# Mac mini 上
+cd ~/.openclaw/workspace
+git add .
+git commit -m "sync from mac mini"
+git push
+```
+
+然后在主 Mac 上拉取：
+
+```bash
+# 主 Mac 上
+cd ~/.openclaw/workspace
+git pull
+```
+
+反向操作完全一样，两台对等，没有主次之分。
+
+---
+
+### 5. 处理冲突
+
+两台电脑**同时修改了同一个文件**，就会产生冲突。比如两台都改了 `MEMORY.md`，push 时后一台会报错：
+
+```
+! [rejected] main -> main (fetch first)
+error: failed to push some refs
+```
+
+**解决步骤：**
+
+**第一步：先拉取对方的改动**
+
+```bash
+git pull --rebase
+```
+
+**第二步：查看冲突文件**
+
+冲突的文件里会出现这样的标记：
+
+```
+<<<<<<< HEAD
+这是你本地的内容
+=======
+这是对方的内容
+>>>>>>> origin/main
+```
+
+**第三步：手动选择保留哪部分**
+
+编辑文件，删掉标记符号，保留你想要的内容，或者把两部分合并。
+
+**第四步：提交并推送**
+
+```bash
+git add .
+git rebase --continue
+git push
+```
+
+---
+
+### 6. 避免冲突的最佳实践
+
+> 最好的解决冲突方式是**尽量不产生冲突**。
+
+- **切换电脑前先 push**，用完一台及时同步
+- **用完另一台先 pull**，再开始工作
+- AI 助手会帮你定期自动 push，冲突概率极低
+
+养成习惯：**离开前 push，开始前 pull**。
+
 ---
 
 ## 常见问题
