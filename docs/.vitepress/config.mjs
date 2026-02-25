@@ -23,6 +23,7 @@ export default withMermaid(defineConfig({
             { text: '工作原理', link: '/openclaw/how-it-works' },
             { text: '搭建记录', link: '/openclaw/setup' },
             { text: 'Skills', link: '/openclaw/skills' },
+            { text: '接入通义千问', link: '/openclaw/qwen-setup' },
             { text: '使用技巧', link: '/openclaw/tips' },
           ]
         }
