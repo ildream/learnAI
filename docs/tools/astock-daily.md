@@ -184,6 +184,93 @@ openclaw cron edit <job-id> --announce --channel feishu
 
 ---
 
+## Cron 是什么？
+
+### 一句话理解
+
+> **Cron = 定时闹钟**。你设定好"什么时候"做"什么事"，时间到了自动执行，不需要人工干预。
+
+Cron 是 Unix/Linux 系统自带的定时任务机制，历史超过 50 年，是服务器自动化的基础工具。OpenClaw 内置了 Cron 调度器，让 AI 也能按时自动执行任务。
+
+### Cron 表达式
+
+Cron 用一串简洁的表达式描述"什么时候执行"：
+
+```
+┌─────────── 分钟 (0-59)
+│  ┌──────── 小时 (0-23)
+│  │  ┌───── 日期 (1-31)
+│  │  │  ┌── 月份 (1-12)
+│  │  │  │  ┌─ 星期 (0-7，0和7都是周日)
+│  │  │  │  │
+30  8  *  *  1-5
+```
+
+**常用示例：**
+
+| 表达式 | 含义 |
+|--------|------|
+| `30 8 * * 1-5` | 每周一至五 08:30 |
+| `30 15 * * 1-5` | 每周一至五 15:30 |
+| `0 9 * * *` | 每天早上 9:00 |
+| `0 */2 * * *` | 每隔 2 小时 |
+| `0 9 1 * *` | 每月 1 号早上 9:00 |
+| `*/30 * * * *` | 每 30 分钟 |
+
+> 💡 **`*` 表示"任意"**，`1-5` 表示"1到5"，`*/2` 表示"每隔2"。
+
+### OpenClaw Cron 的两种模式
+
+```mermaid
+graph TD
+    A[Cron 任务] --> B[main session 模式]
+    A --> C[isolated session 模式]
+    B --> D[在主对话中触发 影响聊天记录]
+    C --> E[开独立会话执行 不影响主聊天]
+    E --> F[结果通过 announce 推送到指定渠道]
+```
+
+| 模式 | 适合场景 |
+|------|---------|
+| `main session` | 需要主对话上下文的任务（如提醒） |
+| `isolated session` | 独立自动化任务（如日报、定时推送）✅ A股日报用的就是这个 |
+
+### Cron 任务的生命周期
+
+```mermaid
+graph LR
+    A[cron add 创建任务] --> B[idle 等待中]
+    B --> C{时间到了?}
+    C -->|是| D[running 执行中]
+    D --> E[完成]
+    E --> B
+    C -->|否| B
+```
+
+任务持久存储在 `~/.openclaw/cron/jobs.json`，重启 Mac 或 Gateway 后依然有效。
+
+### 常用管理命令
+
+```bash
+# 查看所有任务及下次执行时间
+openclaw cron list
+
+# 立即手动触发（不等时间，测试用）
+openclaw cron run <job-id>
+
+# 暂停 / 恢复
+openclaw cron disable <job-id>
+openclaw cron enable <job-id>
+
+# 查看某个任务的历史运行记录
+openclaw cron runs --id <job-id>
+
+# 删除任务
+openclaw cron delete <job-id>
+```
+
+---
+
 ## 实现原理
 
 ### 没有代码，只有配置
