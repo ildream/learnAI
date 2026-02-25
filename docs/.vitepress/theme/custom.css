@@ -10,12 +10,11 @@
   padding: 0 24px !important;
 }
 
-/* 没有侧边栏时也铺满 */
 .VPDoc:not(.has-sidebar) .content {
   max-width: 100% !important;
 }
 
-/* Mermaid 流程图放大，支持横向滚动 */
+/* Mermaid 流程图 */
 .mermaid-wrapper,
 .vp-mermaid {
   width: 100% !important;
@@ -28,11 +27,69 @@
   width: 100% !important;
   height: auto !important;
   cursor: zoom-in;
+  transition: opacity 0.2s;
 }
 
-/* 点击放大：流程图全屏查看 */
-.mermaid svg:active,
-.vp-mermaid svg:active {
-  transform: scale(1.5);
-  transform-origin: top left;
+.mermaid svg:hover,
+.vp-mermaid svg:hover {
+  opacity: 0.85;
+}
+
+/* Lightbox 遮罩 */
+.mermaid-lightbox {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.85);
+  z-index: 9999;
+  cursor: zoom-out;
+  overflow: auto;
+  padding: 40px;
+  box-sizing: border-box;
+}
+
+.mermaid-lightbox.active {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+}
+
+.mermaid-lightbox svg {
+  max-width: none !important;
+  width: auto !important;
+  height: auto !important;
+  min-width: 0 !important;
+  cursor: default;
+  background: white;
+  border-radius: 8px;
+  padding: 24px;
+}
+
+.mermaid-lightbox-close {
+  position: fixed;
+  top: 16px;
+  right: 24px;
+  color: white;
+  font-size: 36px;
+  cursor: pointer;
+  z-index: 10000;
+  line-height: 1;
+  user-select: none;
+}
+
+.mermaid-lightbox-close:hover {
+  color: #ccc;
+}
+
+.mermaid-lightbox-hint {
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  color: rgba(255,255,255,0.6);
+  font-size: 13px;
+  pointer-events: none;
 }
