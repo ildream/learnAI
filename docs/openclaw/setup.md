@@ -287,11 +287,32 @@ git push
 
 > 最好的解决冲突方式是**尽量不产生冲突**。
 
-- **切换电脑前先 push**，用完一台及时同步
-- **用完另一台先 pull**，再开始工作
-- AI 助手会帮你定期自动 push，冲突概率极低
+#### 自动 Push（已配置）
 
-养成习惯：**离开前 push，开始前 pull**。
+在 `HEARTBEAT.md` 中加入以下任务，AI 助手每 30 分钟自动将 workspace 改动 push 到 GitHub：
+
+```markdown
+每次心跳时运行：
+cd ~/.openclaw/workspace
+git add .
+git -c commit.gpgsign=false commit -m "auto-sync: $(date '+%Y-%m-%d %H:%M')"
+git push
+```
+
+没有改动时自动跳过，push 失败时才通知你。
+
+#### 手动 Pull（建议手动）
+
+Pull **不建议自动化** — 因为可能产生冲突，自动处理不当会丢数据。
+
+切换到另一台电脑时，手动运行一次：
+
+```bash
+cd ~/.openclaw/workspace
+git pull
+```
+
+**最佳习惯：开始工作前先 pull，AI 助手帮你定期 push，冲突概率极低。**
 
 ---
 
