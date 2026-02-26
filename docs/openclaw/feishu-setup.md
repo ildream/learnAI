@@ -93,11 +93,27 @@ openclaw plugins install @openclaw/feishu
 
 ### 5. 配置事件订阅
 
-> ⚠️ 请先完成第三步（OpenClaw 配置）并启动 Gateway，再回来配置事件订阅
+> ⚠️ **顺序很重要！** 必须先完成第三步（配置 OpenClaw）和第四步（启动 Gateway），再回来配置事件订阅。否则保存时会报错：`app did not establish a websocket connection`
 
-进入 **事件订阅**：
-1. 选择 **使用长连接接收事件**（WebSocket 模式，无需公网 IP）
-2. 添加事件：`im.message.receive_v1`
+进入左侧菜单 **事件订阅（Event Subscription）**：
+
+**第一部分：选择订阅模式**
+
+1. 在 **Subscription mode** 下，选择 **Receive events through persistent connection**（长连接，推荐）
+   - 这个模式无需公网 IP，OpenClaw 主动连接飞书服务器
+   - 不要选 "Send notifications to developer's server"（那个需要公网域名）
+2. 点击 **Save** 保存
+   - ✅ 如果 Gateway 正在运行，保存会成功
+   - ❌ 如果报错 `app did not establish a websocket connection`，说明 Gateway 还没启动，先去终端运行 `openclaw gateway restart` 再回来保存
+
+**第二部分：添加事件**
+
+1. 点击右侧 **Add Events** 按钮，弹出选择面板
+2. 在顶部 **Search 搜索框** 输入：`receive_v1`
+3. 搜索结果中找到 **im.message.receive_v1**，勾选它 ✅
+   - 这个事件是"接收用户发给机器人的消息"，是必须的
+   - 其他事件不需要勾选
+4. 点击右下角 **Confirm** 确认
 
 ### 6. 发布应用
 
