@@ -90,9 +90,10 @@ openclaw cron add \
   --cron "30 8 * * 1-5" \
   --tz "Asia/Shanghai" \
   --session isolated \
-  --message "请帮我生成今日A股早报..." \
+  --message "请帮我生成今日A股早报。抓取以下网站的最新数据：1. 东方财富(https://www.eastmoney.com) 2. 同花顺热榜(https://www.10jqka.com.cn) 3. 开盘啦(https://kaipanla.com) 4. 雪球热帖(https://xueqiu.com)。按以下格式生成报告：【A股早报 今日日期】① 隔夜外盘情况及对A股影响预判 ② 市场情绪预判（昨日涨跌比、成交量、北向资金） ③ 主流热点板块Top3（板块名+驱动逻辑+持续性评估⭐） ④ 重点关注个股（股票名+代码+上涨性质：情绪炒作/基本面驱动/两者兼有+风险提示） ⑤ 今日操作建议（短线方向+需回避风险点）。请用简洁专业的语言，适合A股短线交易者参考。生成完成后，必须调用message工具把完整报告发送到telegram频道，target为<你的Telegram Chat ID>。" \
   --announce \
-  --channel telegram
+  --channel telegram \
+  --to <你的Telegram Chat ID>
 ```
 
 ### 3. 添加收盘复盘 Cron 任务
@@ -103,9 +104,10 @@ openclaw cron add \
   --cron "30 15 * * 1-5" \
   --tz "Asia/Shanghai" \
   --session isolated \
-  --message "请帮我生成今日A股收盘复盘报告..." \
+  --message "请帮我生成今日A股收盘复盘报告。抓取以下网站的最新数据：1. 东方财富(https://www.eastmoney.com) 2. 同花顺热榜(https://www.10jqka.com.cn) 3. 开盘啦(https://kaipanla.com) 4. 雪球热帖(https://xueqiu.com)。按以下格式生成报告：【A股收盘复盘 今日日期】① 今日市场总结（指数涨跌、成交量、市场情绪评分1-10分） ② 热点板块复盘（今日涨幅最大板块+驱动因素+明日持续性评估⭐） ③ 个股亮点（今日涨幅居前个股+性质分析：情绪炒作/基本面驱动） ④ 资金动向（主力资金流向、北向资金） ⑤ 明日预判（值得关注的方向+潜在风险提示）。请用简洁专业的语言，适合A股短线交易者参考。生成完成后，必须调用message工具把完整报告发送到telegram频道，target为<你的Telegram Chat ID>。" \
   --announce \
-  --channel telegram
+  --channel telegram \
+  --to <你的Telegram Chat ID>
 ```
 
 ### 4. 添加晚报 Cron 任务
@@ -116,9 +118,10 @@ openclaw cron add \
   --cron "30 21 * * 1-5" \
   --tz "Asia/Shanghai" \
   --session isolated \
-  --message "请帮我生成今晚A股晚报..." \
+  --message "请帮我生成今晚A股晚报。抓取以下网站的最新数据：1. 东方财富(https://www.eastmoney.com) 2. 同花顺热榜(https://www.10jqka.com.cn) 3. 开盘啦(https://kaipanla.com) 4. 雪球热帖(https://xueqiu.com)。按以下格式生成报告：【A股晚报 今日日期】① 今日市场回顾（一句话总结今日行情） ② 盘后重要消息（政策面、消息面、行业动态） ③ 明日重点关注（可能影响明日行情的事件/数据/消息） ④ 热点板块前瞻（明日最值得关注的1-2个板块+理由） ⑤ 短线选股方向（结合今日量能和资金流向，给出明日短线思路） ⑥ 风险提示。请用简洁专业的语言，适合A股短线交易者参考。生成完成后，必须调用message工具把完整报告发送到telegram频道，target为<你的Telegram Chat ID>。" \
   --announce \
-  --channel telegram
+  --channel telegram \
+  --to <你的Telegram Chat ID>
 ```
 
 ### 5. 确认任务已创建
@@ -295,14 +298,21 @@ openclaw cron delete <job-id>
   "sessionTarget": "isolated",
   "payload": {
     "kind": "agentTurn",
-    "message": "请帮我生成今日A股早报..."
+    "message": "请帮我生成今日A股早报...生成完成后，必须调用message工具把完整报告发送到telegram频道，target为<Chat ID>。"
   },
   "delivery": {
     "mode": "announce",
-    "channel": "telegram"
+    "channel": "telegram",
+    "to": "<你的Telegram Chat ID>",
+    "bestEffort": true
   }
 }
 ```
+
+> ⚠️ **重要：关于发送方式**
+>
+> `announce` 模式有 30 秒超时限制，但报告生成通常需要 60~80 秒，容易导致投递失败。
+> 解决方案是在 prompt 末尾加上指令，让 AI **主动调用 `message` 工具**发送报告，双保险确保送达。
 
 ### 完整执行流程
 
@@ -320,7 +330,8 @@ sequenceDiagram
     AI->>财经网站: web_fetch 抓取数据
     财经网站-->>AI: 返回页面内容
     AI->>AI: 分析整理，生成报告
-    AI->>Telegram: delivery.mode=announce 推送
+    AI->>Telegram: 调用 message 工具主动发送（双保险）
+    Gateway->>Telegram: announce 模式备用推送
     Telegram-->>用户: 收到日报
 ```
 
@@ -330,9 +341,11 @@ sequenceDiagram
 |------|----|------|
 | `schedule.expr` | `30 8 * * 1-5` | Cron 表达式：周一至周五 8:30 |
 | `sessionTarget` | `isolated` | 开独立会话，不影响主聊天记录 |
-| `payload.message` | 提示词文本 | 发给 AI 的指令，告诉它要做什么 |
-| `delivery.mode` | `announce` | 把结果主动推送出去 |
+| `payload.message` | 提示词文本 | 发给 AI 的指令，末尾要求 AI 主动调用 message 工具发送 |
+| `delivery.mode` | `announce` | 备用推送机制（主发送由 AI 的 message 工具完成）|
 | `delivery.channel` | `telegram` | 推送到 Telegram |
+| `delivery.to` | Chat ID | 接收报告的 Telegram 用户 ID |
+| `delivery.bestEffort` | `true` | announce 失败不报错，不影响任务状态 |
 
 ### 本质
 
