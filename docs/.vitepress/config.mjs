@@ -24,6 +24,7 @@ export default withMermaid(defineConfig({
             { text: '搭建记录', link: '/openclaw/setup' },
             { text: 'Skills', link: '/openclaw/skills' },
             { text: '接入通义千问', link: '/openclaw/qwen-setup' },
+            { text: '接入飞书', link: '/openclaw/feishu-setup' },
             { text: '使用技巧', link: '/openclaw/tips' },
           ]
         }
