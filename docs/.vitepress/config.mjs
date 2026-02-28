@@ -42,6 +42,7 @@ export default withMermaid(defineConfig({
           text: '大语言模型',
           items: [
             { text: '介绍', link: '/llm/' },
+            { text: '核心概念全景图', link: '/llm/ai-concepts-evolution' },
           ]
         }
       ],
