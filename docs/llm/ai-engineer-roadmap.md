@@ -82,16 +82,43 @@ mindmap
 
 ### 2.2 主流模型认知
 
-要知道当前主要玩家：
+> 截至 2026 年 Q1，以下是生产环境主流选型。这个领域更新极快，关注官方渠道保持同步。
 
-| 公司 | 模型 | 特点 |
-|------|------|------|
-| OpenAI | GPT-4o, o1, o3 | 综合最强，生态最广 |
-| Anthropic | Claude 3.5/3.7 | 长 Context，推理强，安全性高 |
-| Google | Gemini 1.5/2.0 | 超长 Context，多模态强 |
-| Meta | Llama 3 | 开源，可本地部署 |
-| 阿里 | Qwen 2.5 | 中文最强开源，代码能力强 |
-| DeepSeek | R1, V3 | 推理强，成本低 |
+**闭源商业模型**
+
+| 公司 | 当前主力模型 | 特点 |
+|------|------------|------|
+| OpenAI | GPT-4o、o3、o3-mini | o3 是目前综合推理最强；GPT-4o 性价比高；生态最广 |
+| Anthropic | Claude 3.7 Sonnet | 支持 Extended Thinking（深度推理模式）；代码和长文档最强 |
+| Google | Gemini 2.0 Flash / Pro | Flash 极快极便宜；Pro 多模态强；支持 100 万 Token Context |
+| xAI | Grok 3 | 推理能力强，实时联网，马斯克生态 |
+| Moonshot | Kimi k1.5 | 长 Context + 推理；国内中文场景表现好 |
+
+**开源 / 可本地部署模型**
+
+| 公司 | 当前主力模型 | 特点 |
+|------|------------|------|
+| Meta | Llama 3.3 70B / 3.1 405B | 开源扛把子，社区生态最丰富 |
+| 阿里 | Qwen 2.5 / Qwen 2.5-Coder / QwQ-32B | 中文最强开源；Coder 系列代码极强；QwQ 是开源推理模型 |
+| DeepSeek | DeepSeek-V3 / R1 | R1 是最强开源推理模型，成本极低，震动行业 |
+| Mistral | Mistral Large 2 / Codestral | 欧洲系，Codestral 专门为代码优化 |
+| 智谱 | GLM-4 | 国内开源，中英双语均衡 |
+| MiniMax | MiniMax-01 | 长 Context（100 万 Token），多模态 |
+
+**2025-2026 最大新趋势：推理模型（Reasoning Models）**
+
+从"直接回答"进化为"先深度思考再回答"：
+
+| 模型 | 特点 |
+|------|------|
+| OpenAI o3 / o3-mini | 用于数学、代码、逻辑推理的专用系列 |
+| Claude 3.7 Extended Thinking | 可控的深度思考模式，透明度高 |
+| Gemini 2.0 Flash Thinking | Google 的推理版本 |
+| DeepSeek-R1 | 开源推理模型的最强选项，成本是 o1 的 1/30 |
+| QwQ-32B | 阿里开源推理模型，32B 参数可本地跑 |
+| Kimi k1.5 | 国内推理模型代表 |
+
+> **关键认知**：推理模型不是"更好的 GPT"，是架构级变化 —— 用更多计算换更高质量。适合复杂任务，不适合简单问答（太贵太慢）。
 
 ### 2.3 微调（Fine-tuning）基础
 
@@ -102,9 +129,14 @@ mindmap
 
 ### 2.4 多模态
 
-- 图像理解（Vision）：GPT-4V、Claude Vision
-- 语音（STT/TTS）：Whisper、OpenAI TTS
-- 未来趋势：文本/图像/音频/视频统一处理
+模型已不再只处理文字，2025-2026 年多模态是标配：
+
+- **图像理解（Vision）**：GPT-4o Vision、Claude 3.7、Gemini 2.0 均原生支持
+- **图像生成**：GPT-4o 原生图像生成（2025 新增）、DALL·E 3、Stable Diffusion
+- **语音（STT/TTS）**：OpenAI Whisper（语音转文字）、OpenAI TTS、ElevenLabs（拟真语音）
+- **视频理解**：Gemini 2.0 支持视频输入分析
+- **实时语音对话**：GPT-4o Realtime API（低延迟语音 ↔ 语音）
+- **端到端多模态**：Gemini 2.0 Flash 原生处理文本/图片/音频/视频
 
 ---
 
@@ -151,18 +183,37 @@ mindmap
 
 | 框架 | 适用场景 | 学习优先级 |
 |------|---------|----------|
-| OpenAI SDK | 直接调 API，最简单 | ⭐⭐⭐ 必须 |
+| OpenAI SDK / Anthropic SDK | 直接调 API，最简单 | ⭐⭐⭐ 必须 |
 | LangChain | 复杂链和 RAG | ⭐⭐ |
-| LangGraph | 有状态 Agent、工作流 | ⭐⭐ |
+| LangGraph | 有状态 Agent、复杂工作流 | ⭐⭐⭐ 重要 |
 | LlamaIndex | RAG 专精框架 | ⭐⭐ |
-| CrewAI | 多 Agent 协作 | ⭐ 进阶 |
-| Dify / Coze | 低代码 AI 应用 | ⭐⭐ 快速验证 |
+| CrewAI | 多 Agent 协作 | ⭐⭐ |
+| OpenAI Agents SDK | OpenAI 官方 Agent 框架（2025 新） | ⭐⭐⭐ |
+| Dify / Coze | 低代码 AI 应用，快速验证 | ⭐⭐ |
+| Vercel AI SDK | 前端/全栈 AI 集成，TypeScript 生态 | ⭐⭐ |
 
-### 3.5 MCP 与工具集成
+### 3.5 AI 编程工具（2025-2026 新必备）
+
+这是 2025 年最大的生产力变化，AI 工程师必须会用：
+
+| 工具 | 说明 | 优先级 |
+|------|------|--------|
+| **Cursor** | AI 原生代码编辑器，内置 Agent 模式，目前最主流 | ⭐⭐⭐ 必须 |
+| **GitHub Copilot** | VS Code 插件，微软 + OpenAI，企业最广泛 | ⭐⭐⭐ |
+| **Windsurf** | Codeium 出品，Cascade Agent 模式强 | ⭐⭐ |
+| **Claude Code** | Anthropic 官方 CLI，终端里的 Agent | ⭐⭐ |
+| **Gemini Code Assist** | Google 出品，深度集成 GCP | ⭐ |
+| **v0.dev** | Vercel 出品，前端 UI 生成 | ⭐⭐ |
+| **Bolt.new** | 全栈 Web 应用生成，适合快速原型 | ⭐⭐ |
+
+> 2026 年的 AI 工程师：用 Cursor/Copilot 写代码效率提升 3-5 倍是基本操作，不会用这些工具已经在竞争上落后了。
+
+### 3.6 MCP 与工具集成
 
 - 理解 MCP 协议，能搭建 MCP Server
-- 常用 MCP Server：文件系统、数据库、GitHub、Slack
-- 在支持 MCP 的客户端（Claude Desktop、Cursor）中调试
+- 常用 MCP Server：文件系统、数据库、GitHub、Slack、浏览器控制
+- 在支持 MCP 的客户端（Claude Desktop、Cursor、Windsurf）中调试
+- 2026 年 MCP 已成为主流标准，新工具优先看是否支持 MCP
 
 ---
 
@@ -235,10 +286,11 @@ AI 应用最难的不是做出来，是**验证它好不好用**：
 ### 🟢 入门（0 → 3 个月）
 
 1. Python 基础（如果还不会）
-2. OpenAI API 调用，理解 Prompt / Context / Token
+2. OpenAI / DeepSeek API 调用，理解 Prompt / Context / Token
 3. 做一个简单 RAG：PDF → 向量库 → 问答
 4. 理解 Function Calling，调一个真实 API（天气/搜索）
-5. 用 Dify 或 Coze 做一个完整应用，体验工作流
+5. 上手 Cursor 或 Copilot，体验 AI 辅助编程
+6. 用 Dify 或 Coze 做一个完整应用，体验工作流
 
 **目标**：能独立做出一个可用的 AI 应用
 
@@ -246,20 +298,22 @@ AI 应用最难的不是做出来，是**验证它好不好用**：
 
 1. 深入 RAG：评估、优化检索质量、生产化
 2. Agent 开发：LangGraph 有状态 Agent，处理复杂任务
-3. 微调入门：LoRA 微调一个小模型
+3. 微调入门：用 Qwen 2.5 或 Llama 3.3 做 LoRA 微调
 4. 部署：FastAPI + Docker + 云部署，跑一个真实服务
 5. 可观测性：LangSmith 接入，开始监控生产质量
+6. 理解推理模型（o3/R1/Claude 3.7 Extended Thinking）的使用场景
 
 **目标**：能把 AI 应用从 demo 推向生产
 
 ### 🔴 专家（1 年以上）
 
 1. 深入某个垂直领域（代码生成、法律、医疗、金融）
-2. Multi-Agent 系统设计
-3. 大规模 RAG 系统（百万文档级别）
-4. 模型评估体系建设
-5. AI 安全与对齐实践
-6. 跟进前沿：读论文，理解 o1/o3 这类推理模型的原理
+2. Multi-Agent 系统设计（LangGraph + CrewAI）
+3. 大规模 RAG 系统（百万文档、Graph RAG）
+4. 模型评估体系建设（evals + LLM-as-judge）
+5. AI 安全与对齐实践（Prompt Injection 防御、幻觉控制）
+6. 推理模型深度应用：理解 Chain-of-Thought 与 Test-time Compute 原理
+7. 跟进前沿：精读核心论文（Attention Is All You Need → RLHF → Constitutional AI → o1）
 
 **目标**：能设计系统、培养团队、判断技术方向
 
@@ -271,25 +325,56 @@ AI 应用最难的不是做出来，是**验证它好不好用**：
 
 | 类型 | 工具 |
 |------|------|
-| LLM API | OpenAI、Anthropic、阿里云百炼、DeepSeek |
-| 本地模型 | Ollama、LM Studio |
-| RAG 框架 | LlamaIndex、LangChain |
-| 向量库 | Chroma（本地）、Pinecone（云端）|
-| Agent 框架 | LangGraph、CrewAI、OpenAI Agents SDK |
-| 低代码 | Dify、Coze、n8n |
-| 监控 | LangSmith、Langfuse |
-| 评估 | RAGAS、DeepEval |
+| **LLM API（闭源）** | OpenAI、Anthropic、Google AI Studio、xAI Grok |
+| **LLM API（国内）** | 阿里云百炼（Qwen）、DeepSeek、月之暗面（Kimi）、智谱 GLM |
+| **本地模型运行** | Ollama（最易用）、LM Studio（有 GUI）、vLLM（生产级） |
+| **AI 编程助手** | Cursor、GitHub Copilot、Windsurf、Claude Code |
+| **RAG 框架** | LlamaIndex、LangChain |
+| **向量数据库** | Chroma（本地开发）、Pinecone（云端）、Qdrant（开源生产） |
+| **Agent 框架** | LangGraph、OpenAI Agents SDK、CrewAI |
+| **低代码平台** | Dify（开源自部署）、Coze（字节）、n8n（工作流自动化） |
+| **监控可观测性** | LangSmith、Langfuse（开源） |
+| **评估框架** | RAGAS、DeepEval |
+| **前端 AI 集成** | Vercel AI SDK、Next.js + AI |
 
 ### 学习资源
 
+**视频课程**
+
 | 资源 | 说明 |
 |------|------|
-| [fast.ai](https://fast.ai) | 最好的实践派深度学习课程 |
-| [Andrej Karpathy YouTube](https://youtube.com/@AndrejKarpathy) | 从零理解 LLM |
-| [deeplearning.ai 短课程](https://learn.deeplearning.ai) | LangChain/RAG/Agent 系列，免费 |
-| Hugging Face 文档 | Transformers、PEFT、数据集 |
-| [Simon Willison's Blog](https://simonwillison.net) | AI 工具实战，更新最快 |
-| [learnprompting.org](https://learnprompting.org) | Prompt Engineering 系统学习 |
+| [Andrej Karpathy YouTube](https://youtube.com/@AndrejKarpathy) | 《Neural Networks: Zero to Hero》，最值得看的 LLM 原理课 |
+| [deeplearning.ai 短课程](https://learn.deeplearning.ai) | Andrew Ng 出品，RAG/Agent/MCP 系列持续更新，大量免费 |
+| [fast.ai](https://fast.ai) | 实践派深度学习，从代码到原理 |
+| [Weights & Biases 课程](https://www.wandb.courses) | LLM 工程、微调、评估，实战性强 |
+
+**文档 & 博客**
+
+| 资源 | 说明 |
+|------|------|
+| [Simon Willison's Blog](https://simonwillison.net) | AI 工具实战，更新最快，必订阅 |
+| [Hugging Face 文档](https://huggingface.co/docs) | Transformers、PEFT、数据集，开源模型圣经 |
+| [LangChain 博客](https://blog.langchain.dev) | Agent/RAG 工程实践 |
+| [Anthropic Research](https://www.anthropic.com/research) | 提示工程、安全、模型理解 |
+| [OpenAI Cookbook](https://cookbook.openai.com) | 官方示例代码，实用性高 |
+
+**中文资源**
+
+| 资源 | 说明 |
+|------|------|
+| [动手学深度学习](https://zh.d2l.ai) | 李沐出品，中文最好的深度学习教材 |
+| [李沐论文精读 YouTube](https://youtube.com/@MuLi) | 带你读最重要的 AI 论文 |
+| 极客时间 AI 专栏 | 工程化向，中文体系化 |
+| B站 @跟李沐学AI | 中文 AI 学习最高质量视频 |
+
+**信息流（保持前沿）**
+
+| 渠道 | 说明 |
+|------|------|
+| Twitter/X | 关注：@karpathy、@sama、@anthropicai、@ylecun |
+| Reddit r/LocalLLaMA | 本地模型、开源 AI 社区最活跃 |
+| Hugging Face Daily Papers | 每天最新 AI 论文速览 |
+| The Batch（deeplearning.ai 周报） | Andrew Ng 的 AI 周刊，适合了解大局 |
 
 ---
 
@@ -302,4 +387,4 @@ AI 应用最难的不是做出来，是**验证它好不好用**：
 
 ---
 
-*Last updated: 2026-02-28 | by Dream 🌙*
+*Last updated: 2026-02-28（模型列表同步至 2026 Q1）| by Dream 🌙*
