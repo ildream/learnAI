@@ -335,11 +335,15 @@ apiProvider、regionService
 输出是一个标准三段式 `PLQuickPayLimitInputView`，直接放进 Step 1 生成的 ViewController 里。
 
 **配合 Figma MCP 的完整流程：**
-```
-1. 先输入：
-   读取这个 Figma 链接的组件结构和设计规范：https://figma.com/xxx
 
-2. 把 Figma MCP 的输出复制到 /new-feature 或 /figma-to-swift 的「设计信息」字段里
+直接在 `{{figma_url}}` 处填入链接，Figma MCP 会自动读取设计稿内容，无需手动描述。
+
+```
+/new-feature
+
+功能名称：QuickPay 上限修改
+PRD：...
+Figma 设计稿链接：https://figma.com/xxx
 ```
 
 > 大部分情况 Step 2 可以跳过，`/new-feature` 生成的 VC 里已有基础 UI 结构，只有设计稿特别复杂的 View 才单独跑 `/figma-to-swift`。
