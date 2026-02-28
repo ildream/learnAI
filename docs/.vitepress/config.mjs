@@ -43,6 +43,7 @@ export default withMermaid(defineConfig({
           items: [
             { text: '介绍', link: '/llm/' },
             { text: '核心概念全景图', link: '/llm/ai-concepts-evolution' },
+            { text: 'AI 工程师能力图谱', link: '/llm/ai-engineer-roadmap' },
           ]
         }
       ],

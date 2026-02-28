@@ -15,6 +15,7 @@
 | Workflow | 2022~ | 固定步骤编排的自动化流程 |
 | Agent | 2023~ | 能自主决策、调用工具的 LLM |
 | Skills / Tools | 2023~ | Agent 可调用的能力单元 |
+| Function Calling | 2023~ | 让模型结构化输出、触发函数调用的原生能力 |
 | MCP | 2024~ | 标准化 Agent 与工具连接的协议 |
 
 ---
@@ -266,7 +267,92 @@ OpenClaw 用 `SKILL.md` 来描述一个技能，是一个很实用的范式。
 
 ---
 
-## 八、MCP（模型上下文协议）
+## 八、Function Calling（函数调用）
+
+### 是什么
+
+Function Calling 是 OpenAI 于 2023 年中推出的原生能力：让模型不只返回文字，而是**结构化地输出"要调用哪个函数、传什么参数"**，由开发者代码真正执行，再把结果回传给模型。
+
+这是 Agent 能调用工具的底层机制之一。
+
+### 和普通 Prompt 的区别
+
+普通对话：
+```
+用户：北京今天天气怎么样？
+模型：我不知道，我没有实时数据。
+```
+
+加了 Function Calling：
+```
+用户：北京今天天气怎么样？
+模型：{ "function": "get_weather", "args": { "city": "北京" } }
+→ 代码执行 get_weather("北京") → 返回 {"temp": "12°C", "weather": "晴"}
+→ 模型：北京今天晴，12°C，适合出门。
+```
+
+### 工作流程
+
+```
+1. 开发者定义函数列表（名称、描述、参数 schema）
+2. 用户提问
+3. 模型判断是否需要调用函数，输出结构化 JSON
+4. 开发者代码执行实际函数
+5. 把结果返回给模型
+6. 模型结合结果生成最终回答
+```
+
+### 使用场景
+
+- **实时信息查询**：天气、股价、快递状态
+- **数据库操作**：查订单、改状态
+- **第三方 API 集成**：发邮件、创建日历事件
+- **多步骤 Agent**：模型自主决定调用哪些工具、用什么参数
+
+### 代码示例（OpenAI Python SDK）
+
+```python
+tools = [{
+    "type": "function",
+    "function": {
+        "name": "get_weather",
+        "description": "获取指定城市的实时天气",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "city": {"type": "string", "description": "城市名"}
+            },
+            "required": ["city"]
+        }
+    }
+}]
+
+response = client.chat.completions.create(
+    model="gpt-4o",
+    messages=[{"role": "user", "content": "北京今天天气怎么样？"}],
+    tools=tools,
+    tool_choice="auto"  # 让模型自行决定是否调用
+)
+```
+
+### Function Calling vs MCP vs LangChain Tools
+
+| | Function Calling | LangChain Tools | MCP |
+|--|----------------|----------------|-----|
+| 层级 | 模型原生能力 | 框架封装 | 跨客户端标准协议 |
+| 定义方式 | JSON Schema | Python 类 | MCP Server |
+| 适合场景 | 单应用内调用 | LangChain 生态 | 跨 AI 客户端共享工具 |
+| 可移植性 | 低（绑定 OpenAI） | 中（绑定框架） | 高（任何 MCP 客户端） |
+
+**关系**：Function Calling 是底层原语，LangChain Tools 对它做了封装，MCP 则是在更高层把"工具提供方"标准化，让多个 AI 客户端都能调用同一套工具。
+
+### 未来走向
+
+Function Calling 会成为所有 LLM 的标配能力（已经是了），而 MCP 在此基础上解决了"工具如何跨客户端共享"的问题。两者是**不同层次的概念，相互补充**，不会互相替代。
+
+---
+
+## 九、MCP（模型上下文协议）
 
 ### 是什么
 
@@ -329,7 +415,8 @@ graph TD
     Agent --> Memory[Memory 记忆]
     Agent --> Planning[Planning 规划]
 
-    Tools --> MCP[MCP 标准协议]
+    Tools --> FC[Function Calling 原生调用机制]
+    FC --> MCP[MCP 标准协议]
     MCP --> FS[文件系统]
     MCP --> GitHub[GitHub]
     MCP --> DB[(数据库)]
@@ -346,6 +433,7 @@ graph TD
 | 手写 Prompt 调优 | 自动 Prompt 优化 / DSPy | 3~5 年 | Prompt Engineering 仍是核心技能 |
 | 简单 RAG | 大 Context 窗口 | 2~3 年 | 复杂多跳 RAG 仍有价值 |
 | LangChain 繁重封装 | 原生 Function Calling + MCP | 已在发生 | LangChain 转向 LangGraph |
+| LangChain Tool 封装 | Function Calling 原生 + MCP | 已在发生 | 轻量场景直接用原生即可 |
 | 各框架各自的 Tool 接口 | MCP 标准协议 | 1~2 年 | 强烈趋势 |
 | 单一 Agent | Multi-Agent 协作 | 3~5 年 | 复杂任务天然需要分工 |
 | Workflow 和 Agent 各自为政 | 融合架构 | 2~3 年 | Dify 等已在融合 |
