@@ -62,6 +62,7 @@ export default withMermaid(defineConfig({
           text: 'iOS 开发',
           items: [
             { text: '介绍', link: '/ios/' },
+            { text: 'Copilot 高效开发工作流', link: '/ios/copilot-workflow' },
             { text: '资深工程师面试题库', link: '/ios/interview-senior' },
           ]
         }
