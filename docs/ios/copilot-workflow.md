@@ -220,7 +220,7 @@ graph LR
 ### 第一步：复制配置文件
 
 ```bash
-cp -r coins-copilot/.github /path/to/Coins/
+cp -r ~/.openclaw/workspace/coins-copilot/.github /path/to/Coins/
 ```
 
 确认路径正确：
@@ -266,6 +266,129 @@ What coding conventions should I follow in this project?
 ```
 
 > 或者直接使用 `/new-feature` 模板，它已经把文件列表写好了，填入 PRD 和设计信息即可。
+
+---
+
+## 实战：四个模板如何配合使用
+
+### 完整开发流程
+
+```mermaid
+graph LR
+    A[拿到需求] --> B[/figma-to-swift\n还原 UI 组件]
+    A --> C[/new-feature\n生成功能骨架]
+    B --> C
+    C --> D[手动整合 + 补业务逻辑]
+    D --> E[/code-review\n检查问题]
+    E --> F[/write-tests\n补单测]
+```
+
+---
+
+### Step 1：`/new-feature` — 生成功能骨架
+
+开始开发前，先用这个模板生成整体骨架。在 Copilot Chat 输入 `/new-feature`，然后填入变量：
+
+```
+/new-feature
+
+功能名称：QuickPay 上限修改
+
+PRD：
+用户可以在设置页修改 QuickPay 单笔支付上限。
+上限范围 100~50000 PHP，默认 5000。
+修改后需要调用接口保存，保存成功 toast 提示，失败弹错误。
+
+Figma 设计信息：
+（可先留空，或粘贴 Figma MCP 读取的输出）
+
+需要的 Services：
+apiProvider、regionService
+```
+
+**这一步输出：** ViewModel + ViewController + RouterProtocol + API 定义，是整个功能的骨架。
+
+> ⚠️ 必须明确列出需要哪些文件，否则 Copilot 只会输出一个文件。`/new-feature` 模板里已经写好了文件清单。
+
+---
+
+### Step 2：`/figma-to-swift` — 还原复杂 UI 组件（可选）
+
+如果页面 UI 比较复杂，或者想先把 View 层写好，单独用这个模板：
+
+```
+/figma-to-swift
+
+组件名称：QuickPayLimitInputView
+
+设计描述：
+- 顶部标题 "Set Limit"，字号 18 semibold
+- 一个输入框，placeholder "Enter amount"，带 PHP 前缀标签
+- 下方灰色提示文字 "Range: 100 - 50,000 PHP"
+- 底部蓝色确认按钮 "Confirm"，宽度撑满，高度 52
+
+交互说明：
+- 输入非数字自动过滤
+- 超出范围时输入框变红，提示文字变红
+```
+
+输出是一个标准三段式 `PLQuickPayLimitInputView`，直接放进 Step 1 生成的 ViewController 里。
+
+**配合 Figma MCP 的完整流程：**
+```
+1. 先输入：
+   读取这个 Figma 链接的组件结构和设计规范：https://figma.com/xxx
+
+2. 把 Figma MCP 的输出复制到 /new-feature 或 /figma-to-swift 的「设计信息」字段里
+```
+
+> 大部分情况 Step 2 可以跳过，`/new-feature` 生成的 VC 里已有基础 UI 结构，只有设计稿特别复杂的 View 才单独跑 `/figma-to-swift`。
+
+---
+
+### Step 3：`/code-review` — 写完后 Review
+
+把生成或手写的代码粘进来：
+
+```
+/code-review
+
+{{code}} =
+[把要 Review 的代码粘贴在这里]
+```
+
+**输出三个级别：**
+- 🔴 必须改（架构问题、内存泄漏、线程问题）
+- 🟡 建议改（代码质量）
+- 🟢 值得保留的亮点
+
+---
+
+### Step 4：`/write-tests` — 功能稳定后补单测
+
+```
+/write-tests
+
+{{code}} =
+[把 ViewModel 代码粘贴在这里]
+
+需要重点测试的场景：
+保存成功、保存失败、输入超出范围
+```
+
+**输出：** `PLQuickPayLimitViewModelTests.swift` + `PLQuickPayLimitMocks.swift`
+
+---
+
+### 一次完整开发的操作顺序
+
+```
+1. /new-feature      → 生成功能骨架（ViewModel + VC + Router + API）
+2. /figma-to-swift   → 生成复杂 UI 组件（如有）
+3. 手动把两者整合，补业务逻辑
+4. /code-review      → 检查问题，修掉 🔴
+5. /write-tests      → 补单测
+```
 
 ---
 
