@@ -352,19 +352,44 @@ Figma 设计稿链接：https://figma.com/xxx
 
 ### Step 3：`/code-review` — 写完后 Review
 
-把生成或手写的代码粘进来：
+升级后的 code-review 支持三种使用方式，不需要手动粘贴代码：
 
+**方式一：review 本次所有改动（最常用）**
 ```
 /code-review
+#changes
+```
 
-{{code}} =
-[把要 Review 的代码粘贴在这里]
+**方式二：review 指定文件**
+```
+/code-review
+@PLXxxViewModel.swift @PLXxxViewController.swift
+```
+
+**方式三：对照 PRD review 业务逻辑**
+```
+/code-review
+#changes
+@docs/prd/quickpay-limit.md
+```
+
+**方式四：GitLab MR review（无原生支持，用 git diff 绕过）**
+```bash
+# 终端拿到 diff
+git fetch origin && git diff origin/main...HEAD
+```
+```
+/code-review
+[粘贴 diff 输出]
+对照以下 PRD 检查业务逻辑：[粘贴 PRD 描述]
 ```
 
 **输出三个级别：**
-- 🔴 必须改（架构问题、内存泄漏、线程问题）
-- 🟡 建议改（代码质量）
+- 🔴 必须改（架构问题、内存安全、线程安全）
+- 🟡 建议改（代码质量、可维护性）
 - 🟢 值得保留的亮点
+
+> `#changes` 是 VS Code Copilot 内置变量，直接引用当前 git diff，不需要任何额外操作。
 
 ---
 
