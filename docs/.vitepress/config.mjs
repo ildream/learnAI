@@ -12,6 +12,7 @@ export default withMermaid(defineConfig({
       { text: 'OpenClaw', link: '/openclaw/' },
       { text: 'LLM', link: '/llm/' },
       { text: '工具', link: '/tools/' },
+      { text: 'iOS 开发', link: '/ios/' },
     ],
     sidebar: {
       '/openclaw/': [
@@ -53,6 +54,15 @@ export default withMermaid(defineConfig({
           items: [
             { text: '介绍', link: '/tools/' },
             { text: 'A股日报系统', link: '/tools/astock-daily' },
+          ]
+        }
+      ],
+      '/ios/': [
+        {
+          text: 'iOS 开发',
+          items: [
+            { text: '介绍', link: '/ios/' },
+            { text: '资深工程师面试题库', link: '/ios/interview-senior' },
           ]
         }
       ],
