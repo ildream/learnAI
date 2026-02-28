@@ -217,17 +217,55 @@ graph LR
 
 ## 落地步骤
 
+### 第一步：复制配置文件
+
 ```bash
-# 1. 把 .github 目录放到项目根目录
 cp -r coins-copilot/.github /path/to/Coins/
-
-# 2. 重启 VS Code，Copilot Chat 会自动读取 copilot-instructions.md
-
-# 3. 验证生效
-# 在 Chat 输入：
-# "帮我写一个简单的 ViewModel 骨架，功能是展示用户余额"
-# 看生成结果是否有 PL 前缀、PLCoinsAppRevampScrollViewController 基类、三段式结构
 ```
+
+确认路径正确：
+```bash
+ls /path/to/Coins/.github/copilot-instructions.md
+```
+
+### 第二步：在 VS Code 里打开项目
+
+用 VS Code **打开 Coins 项目根目录**（`File → Open Folder`），不是打开某个子目录。
+`copilot-instructions.md` 是**静默生效**的，没有弹窗提示，不需要任何手动操作。
+
+### 第三步：验证是否生效
+
+在 Copilot Chat 输入：
+```
+What coding conventions should I follow in this project?
+```
+
+✅ 已生效：回答里提到 `PL` 前缀、`PLCoinsAppRevampScrollViewController`、`commonInit` 三段式、`Navigator.shared().push` 等项目特定内容
+
+❌ 未生效：回答的是通用 Swift 规范，没有项目特定内容 → 检查文件路径是否正确
+
+### 第四步：测试多文件生成
+
+验证生效后，测试生成完整功能代码时**必须明确列出需要哪些文件**，否则 Copilot 只会输出一个文件：
+
+```
+参考项目规范，帮我实现"用户余额展示"功能，输出以下文件：
+
+1. PLUserBalanceViewModel.swift
+   - 含 PLUserBalanceInterfaceProtocol、PLUserBalanceViewModelProtocol
+   - 含 PLUserBalanceInputContext（结构体，传入 currency: String）
+   - 含 PLUserBalanceViewModel 实现
+
+2. PLUserBalanceViewController.swift
+   - 继承 PLCoinsAppRevampScrollViewController
+   - commonInit / constructUI / layoutUI / configureUI 三段式
+   - 遵守 PLUserBalanceInterfaceProtocol
+
+3. PLUserBalanceRouterProtocol.swift
+   - 包含 routeToTransactionDetail() 方法
+```
+
+> 或者直接使用 `/new-feature` 模板，它已经把文件列表写好了，填入 PRD 和设计信息即可。
 
 ---
 
