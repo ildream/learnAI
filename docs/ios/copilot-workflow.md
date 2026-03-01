@@ -361,14 +361,14 @@ Figma 设计稿链接：https://figma.com/xxx
 **方式二：review 指定文件**
 ```
 /code-review
-@PLXxxViewModel.swift @PLXxxViewController.swift
+#PLXxxViewModel.swift #PLXxxViewController.swift
 ```
 
 **方式三：对照 PRD review 业务逻辑**
 ```
 /code-review
 #changes
-@docs/prd/quickpay-limit.md
+#quickpay-limit.md
 ```
 
 **方式四：GitLab MR review（无原生支持，用 git diff 绕过）**
@@ -393,11 +393,11 @@ git fetch origin && git diff origin/main...HEAD
 
 ### Step 4：`/write-tests` — 功能稳定后补单测
 
+在 Copilot Chat 输入 `/write-tests`，然后用 `#` 引用文件（输入 `#` 后系统会弹出文件提示，回车确认后自动变成 `#file:PLXxxViewModel.swift` 的形式）：
+
 ```
 /write-tests
-
-{{code}} =
-[把 ViewModel 代码粘贴在这里]
+#PLQuickPayLimitViewModel.swift
 
 需要重点测试的场景：
 保存成功、保存失败、输入超出范围
@@ -604,14 +604,14 @@ Four usage patterns — no need to paste code manually:
 **Review specific files**
 ```
 /code-review
-@PLXxxViewModel.swift @PLXxxViewController.swift
+#PLXxxViewModel.swift #PLXxxViewController.swift
 ```
 
 **Review against PRD (business logic check)**
 ```
 /code-review
 #changes
-@docs/prd/quickpay-limit.md
+#quickpay-limit.md
 ```
 
 **GitLab MR review (workaround — no native support)**
@@ -638,8 +638,7 @@ Check business logic against: [paste PRD description]
 
 ```
 /write-tests
-
-@PLQuickPayLimitViewModel.swift
+#PLQuickPayLimitViewModel.swift
 
 Key scenarios to cover:
 - Save success
