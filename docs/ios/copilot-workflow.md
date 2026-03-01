@@ -533,11 +533,134 @@ func registerYyyRoute() {
 
 ### Prompt Templates Workflow
 
+```mermaid
+graph LR
+    A[Got a task] --> B["/figma-to-swift<br/>Restore UI component"]
+    A --> C["/new-feature<br/>Generate feature scaffold"]
+    B --> C
+    C --> D["Integrate + fill business logic"]
+    D --> E["/code-review<br/>Review issues"]
+    E --> F["/write-tests<br/>Add unit tests"]
+```
+
+### Step 1: `/new-feature` — Generate the Feature Scaffold
+
+Start every new feature here. In Copilot Chat, type `/new-feature` and fill in the variables:
+
+```
+/new-feature
+
+Feature name: QuickPay Limit Setting
+
+PRD:
+Users can modify the single-transaction limit for QuickPay.
+Valid range: 100–50,000 PHP. Default: 5,000.
+On save: call the API, show toast on success, show error dialog on failure.
+
+Figma URL: https://figma.com/xxx   (Figma MCP reads it automatically)
+
+Required services: apiProvider, regionService
+```
+
+**Output:** `PLXxxBuilder.swift`, `PLXxxRouter.swift`, `PLXxxViewModel.swift`, `PLXxxViewController.swift`, `PLXxxAPI.swift` — the complete feature scaffold.
+
+> ⚠️ The template already lists the required files. Don't skip any — Copilot will only generate one file if you don't specify.
+
+---
+
+### Step 2: `/figma-to-swift` — Restore Complex UI Components (optional)
+
+Use this when a specific View is too complex to generate inline, or when you want to build the UI layer first independently.
+
+```
+/figma-to-swift
+
+Component name: QuickPayLimitInputView
+
+Figma URL: https://figma.com/xxx
+
+Interaction notes:
+- Filter out non-numeric input automatically
+- Turn input box red when value is out of range
+- Show red helper text: "Range: 100 – 50,000 PHP"
+```
+
+**Output:** A standalone `PLQuickPayLimitInputView` with full 3-stage `commonInit`, SnapKit constraints, and a clean data-binding interface. Drop it directly into the ViewController from Step 1.
+
+> Most of the time you can skip this step — `/new-feature` already generates basic UI structure. Only use `/figma-to-swift` for designs that are too complex to describe inline.
+
+---
+
+### Step 3: `/code-review` — Review After Writing
+
+Four usage patterns — no need to paste code manually:
+
+**Most common: review all current changes**
+```
+/code-review
+#changes
+```
+
+**Review specific files**
+```
+/code-review
+@PLXxxViewModel.swift @PLXxxViewController.swift
+```
+
+**Review against PRD (business logic check)**
+```
+/code-review
+#changes
+@docs/prd/quickpay-limit.md
+```
+
+**GitLab MR review (workaround — no native support)**
+```bash
+# Get the diff first
+git fetch origin && git diff origin/main...HEAD
+```
+```
+/code-review
+[paste diff output here]
+Check business logic against: [paste PRD description]
+```
+
+**Output severity levels:**
+- 🔴 Must fix (architecture, memory safety, thread safety)
+- 🟡 Suggested (code quality, maintainability)
+- 🟢 Worth keeping (good patterns spotted)
+
+> `#changes` is a built-in VS Code Copilot variable — it references the current `git diff` automatically.
+
+---
+
+### Step 4: `/write-tests` — Add Unit Tests After Feature Stabilizes
+
+```
+/write-tests
+
+@PLQuickPayLimitViewModel.swift
+
+Key scenarios to cover:
+- Save success
+- Save failure (API error)
+- Input out of range
+- Input is empty
+```
+
+**Output:** `PLQuickPayLimitViewModelTests.swift` + `PLQuickPayLimitMocks.swift`
+
+> ViewModels are fully testable via protocol mocks. Services obtained via `Octopus.getSucker` will be `nil` in test context — inject them via `init` or set up Octopus before tests.
+
+---
+
+### Full Development Order
+
 ```
 1. /new-feature      → scaffold (ViewModel + VC + Router + API)
-2. /figma-to-swift   → complex UI component (optional)
-3. integrate + fill business logic manually
-4. /code-review      → fix 🔴 issues
+2. /figma-to-swift   → complex UI components (if needed)
+3. Manually integrate, fill business logic
+4. /code-review      → fix all 🔴 issues
 5. /write-tests      → unit tests
 ```
 
@@ -557,4 +680,54 @@ func registerYyyRoute() {
 | Route path format | `/pl/module-name/page-name` (lowercase) |
 | VC base class | `PLCoinsUIViewController` (scroll: `PLCoinsAppRevampScrollViewController`) |
 | Threading | Framework handles main thread — no `DispatchQueue.main` needed |
+
+---
+
+## 如何同步到 Confluence
+
+Confluence 是内网，无法自动推送。以下是从低成本到高质量的几种方案：
+
+### 方案 A：Markdown 直接导入（最快，5 分钟）
+
+Confluence 编辑器内置 Markdown 导入：
+
+1. 打开 Confluence，新建或编辑页面
+2. 点击编辑器右上角 `···` → **Insert Markdown**
+3. 把 `copilot-workflow.md` 内容整个粘贴进去
+4. 确认，Confluence 自动转换为富文本
+
+**缺点**：mermaid 流程图会变成代码块，需要手动替换为截图。
+
+---
+
+### 方案 B：文字 + 截图（推荐，效果最好）
+
+1. 在本地浏览器打开 `https://ildream.github.io/learnAI/ios/copilot-workflow.html`
+2. 对每个 mermaid 图截图保存
+3. Confluence 用方案 A 导入文字
+4. 找到图表位置，删掉代码块，插入截图
+
+---
+
+### 方案 C：Confluence Markdown 插件（一劳永逸）
+
+如果公司 Confluence 装了 **Markdown Macro** 插件：
+
+1. 编辑页面 → `插入宏` → 搜索 `Markdown`
+2. 把 `.md` 文件内容粘贴到宏的代码框里
+3. 保存后实时渲染（每次更新只需改宏内容）
+
+---
+
+### 方案 D：Draw.io 重绘流程图（最清晰）
+
+如果公司装了 **Draw.io / Diagrams** 插件，把 mermaid 图用 Draw.io 重画一遍，比截图更清晰且可编辑。
+
+---
+
+### 推荐做法
+
+**短期**：方案 A + B 组合 — 文字用 Markdown 导入，图表截图替换，20 分钟搞定。
+
+**长期**：问一下公司有没有 Markdown Macro 或 Draw.io 插件，有的话方案 C 最省力，后续更新只需改一个地方。
 
