@@ -285,7 +285,7 @@ graph LR
 
 ### Step 1：`/new-feature` — 生成功能骨架
 
-开始开发前，先用这个模板生成整体骨架。在 Copilot Chat 输入 `/new-feature`，然后填入变量：
+在 Copilot Chat 输入 `/new-feature`，然后填入变量：
 
 ```
 /new-feature
@@ -297,8 +297,8 @@ PRD：
 上限范围 100~50000 PHP，默认 5000。
 修改后需要调用接口保存，保存成功 toast 提示，失败弹错误。
 
-Figma 设计信息：
-（可先留空，或粘贴 Figma MCP 读取的输出）
+Figma 设计稿链接：https://figma.com/xxx
+（Figma MCP 自动读取，无需手动描述 UI）
 
 需要的 Services：
 apiProvider、regionService
@@ -312,18 +312,15 @@ apiProvider、regionService
 
 ### Step 2：`/figma-to-swift` — 还原复杂 UI 组件（可选）
 
-如果页面 UI 比较复杂，或者想先把 View 层写好，单独用这个模板：
+如果某个 View 比较复杂，想单独生成，用这个模板：
 
 ```
 /figma-to-swift
 
 组件名称：QuickPayLimitInputView
 
-设计描述：
-- 顶部标题 "Set Limit"，字号 18 semibold
-- 一个输入框，placeholder "Enter amount"，带 PHP 前缀标签
-- 下方灰色提示文字 "Range: 100 - 50,000 PHP"
-- 底部蓝色确认按钮 "Confirm"，宽度撑满，高度 52
+Figma 设计稿链接：https://figma.com/xxx
+（Figma MCP 自动读取颜色、组件、标注）
 
 交互说明：
 - 输入非数字自动过滤
@@ -331,18 +328,6 @@ apiProvider、regionService
 ```
 
 输出是一个标准三段式 `PLQuickPayLimitInputView`，直接放进 Step 1 生成的 ViewController 里。
-
-**配合 Figma MCP 的完整流程：**
-
-直接在 `{{figma_url}}` 处填入链接，Figma MCP 会自动读取设计稿内容，无需手动描述。
-
-```
-/new-feature
-
-功能名称：QuickPay 上限修改
-PRD：...
-Figma 设计稿链接：https://figma.com/xxx
-```
 
 > 大部分情况 Step 2 可以跳过，`/new-feature` 生成的 VC 里已有基础 UI 结构，只有设计稿特别复杂的 View 才单独跑 `/figma-to-swift`。
 
@@ -557,7 +542,8 @@ Users can modify the single-transaction limit for QuickPay.
 Valid range: 100–50,000 PHP. Default: 5,000.
 On save: call the API, show toast on success, show error dialog on failure.
 
-Figma URL: https://figma.com/xxx   (Figma MCP reads it automatically)
+Figma URL: https://figma.com/xxx
+(Figma MCP reads it automatically — no need to describe the UI manually)
 
 Required services: apiProvider, regionService
 ```
@@ -578,6 +564,7 @@ Use this when a specific View is too complex to generate inline, or when you wan
 Component name: QuickPayLimitInputView
 
 Figma URL: https://figma.com/xxx
+(Figma MCP reads colors, components, and spacing automatically)
 
 Interaction notes:
 - Filter out non-numeric input automatically
