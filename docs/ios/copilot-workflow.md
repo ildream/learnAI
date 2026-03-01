@@ -10,9 +10,9 @@ Copilot 生成代码质量低的根本原因是**它不了解你的项目**。�
 
 ```mermaid
 graph TD
-    A[copilot-instructions.md\n项目架构 + 规范\n自动注入每次对话] --> D[GitHub Copilot Chat]
-    B[.github/prompts/*.prompt.md\n可复用任务模板\n/指令调用] --> D
-    C[Figma MCP\n设计稿实时读取] --> D
+    A["copilot-instructions.md<br/>项目架构 + 规范<br/>自动注入每次对话"] --> D[GitHub Copilot Chat]
+    B[".github/prompts/*.prompt.md<br/>可复用任务模板<br/>/指令调用"] --> D
+    C["Figma MCP<br/>设计稿实时读取"] --> D
     D --> E[生成符合项目规范的代码]
 ```
 
@@ -50,24 +50,22 @@ XxxModuleService/   ← 接口层（Routes、Protocol、共享 Model）
 ```mermaid
 classDiagram
     class PLXxxInterfaceProtocol {
-        +viewModel: PLXxxViewModelProtocol!
+        +viewModel PLXxxViewModelProtocol
         +updateUI()
         +showHUD()
         +hideHUD()
     }
     class PLXxxViewModelProtocol {
-        +interface: PLXxxInterfaceProtocol?
-        +router: PLXxxRouterProtocol?
         +viewDidLoad()
         +requestData()
     }
     class PLXxxViewModel {
         -apiProvider
         -regionService
-        +convenience init(interface router context)
+        +init(interface router context)
     }
     class PLXxxViewController {
-        +viewModel: PLXxxViewModelProtocol!
+        +viewModel PLXxxViewModelProtocol
         +commonInit()
     }
 
@@ -100,12 +98,12 @@ Navigator.shared().push(PLXxxModuleRoutes.detail, parameters: [
 sequenceDiagram
     participant VC as ViewController
     participant VM as ViewModel
-    participant R as Router（实现）
+    participant R as Router
     participant N as Navigator
 
     VC->>VM: didTapItem(model)
-    VM->>R: routeToDetail(item: model)
-    R->>N: Navigator.shared().push(route, parameters:)
+    VM->>R: routeToDetail(item)
+    R->>N: Navigator.shared().push(route, parameters)
     N-->>VC2: 实例化目标 ViewController
 ```
 
@@ -188,10 +186,10 @@ private lazy var someService = Octopus.applicationContext?.getSucker(type: PLSom
 
 ```mermaid
 graph LR
-    A[/new-feature] --> B[生成完整功能代码\nViewModel + VC + Route]
-    C[/figma-to-swift] --> D[设计稿转 Swift UIView]
-    E[/code-review] --> F[架构 + 内存 + 线程 Review]
-    G[/write-tests] --> H[生成 XCTest 单测]
+    A["/new-feature"] --> B["生成完整功能代码<br/>ViewModel + VC + Route"]
+    C["/figma-to-swift"] --> D[设计稿转 Swift UIView]
+    E["/code-review"] --> F[架构 + 内存 + 线程 Review]
+    G["/write-tests"] --> H[生成 XCTest 单测]
 ```
 
 ### /new-feature 典型使用流程
@@ -275,12 +273,12 @@ What coding conventions should I follow in this project?
 
 ```mermaid
 graph LR
-    A[拿到需求] --> B[/figma-to-swift\n还原 UI 组件]
-    A --> C[/new-feature\n生成功能骨架]
+    A[拿到需求] --> B["/figma-to-swift<br/>还原 UI 组件"]
+    A --> C["/new-feature<br/>生成功能骨架"]
     B --> C
-    C --> D[手动整合 + 补业务逻辑]
-    D --> E[/code-review\n检查问题]
-    E --> F[/write-tests\n补单测]
+    C --> D["手动整合 + 补业务逻辑"]
+    D --> E["/code-review<br/>检查问题"]
+    E --> F["/write-tests<br/>补单测"]
 ```
 
 ---
@@ -444,3 +442,119 @@ git fetch origin && git diff origin/main...HEAD
 2. **Prompt 模板用 `{{变量}}` 占位**，调用时替换为实际内容
 3. **Figma MCP 需要在 VS Code 设置里配置好**，配置完成后直接粘贴链接即可
 4. **工程中写法不完全统一**（如依赖注入有两种），Copilot 生成后仍需对照同模块已有代码确认风格
+
+---
+
+## English Reference
+
+> Same workflow, condensed for quick reference.
+
+### Overview
+
+The root cause of poor Copilot output is that **it doesn't know your project**. The solution is a three-layer context injection system:
+
+| Layer | File | Purpose | How it's loaded |
+|-------|------|---------|-----------------|
+| **Global rules** | `.github/copilot-instructions.md` | Architecture, naming, component conventions | Auto-injected into every Copilot conversation |
+| **Task templates** | `.github/prompts/*.prompt.md` | New feature, code review, tests | Type `/template-name` in Copilot Chat |
+| **Design specs** | Figma MCP | Live colors, components, spacing | Paste Figma link directly |
+
+### Architecture Layers
+
+```
+PLXxxModule (Octopus Module)     ← Business domain entry point
+  └── FlowRouter (N per module)  ← Manages one complete user flow
+        └── Router               ← Single-page navigation + pop notification
+              ├── ViewController ← UI only
+              └── ViewModel      ← Business logic
+```
+
+### MVVM+R — 4 Files Per Screen
+
+| File | Role |
+|------|------|
+| `PLXxxBuilder.swift` | Assembles VC + VM + Router, returns RouterProtocol |
+| `PLXxxRouter.swift` | RouterProtocol (outward) + RouterInputProtocol (for ViewModel) |
+| `PLXxxViewController.swift` | Inherits `PLCoinsUIViewController`; 3-stage `commonInit` |
+| `PLXxxViewModel.swift` | Business logic; holds `interface` and `router` as `weak` |
+
+### 3-Stage UI Init (VC and UIView)
+
+```swift
+func commonInit() {
+    constructUI()   // addSubview
+    layoutUI()      // SnapKit constraints
+    configureUI()   // static styles (called once)
+    updateUI()      // dynamic data (may be called multiple times)
+}
+```
+
+### Pop Release Chain (required)
+
+```
+viewControllerDidPop()
+  → viewModel.didPop()
+    → router.didPop()
+      → delegate.routerDidClose()
+        → flowRouter.stepRouter = nil   // releases VC
+```
+
+### Module Rules
+
+- `onMounted`: call `PLRootRouterHolderHelper.attach(holder: self)`
+- Implement `cleanupRouters()` — nil out every FlowRouter/Router
+- One `registerXxxRoute()` private function per route
+- One `extension PLXxxModule: PLYyyDelegate` per FlowRouter delegate
+
+### Route Handler Patterns
+
+```swift
+// Pattern 1: FlowRouter flow
+func registerXxxRoute() {
+    Navigator.shared().registerRoute(PLXxxModuleRoutes.xxx) { [weak self] option in
+        guard let self, let ctx = option.parameters?[key] as? PLXxxContext else { return }
+        xxxFlowRouter = PLXxxFlowBuilder.defaultBuilder().build()
+        xxxFlowRouter?.delegate = self
+        xxxFlowRouter?.push(context: ctx)
+    }
+}
+
+// Pattern 2: Direct jump (simple screen)
+func registerYyyRoute() {
+    Navigator.shared().registerRoute(PLXxxModuleRoutes.yyy) { option in
+        var vc: UIViewController = PLYyyBuilder.defaultBuilder().build()
+        if option.isModal {
+            vc = Navigator.shared().buildDefaultNavigationController(rootViewController: vc)
+        }
+        Navigator.shared().doJump(option: option, viewController: vc)
+    }
+}
+```
+
+### Prompt Templates Workflow
+
+```
+1. /new-feature      → scaffold (ViewModel + VC + Router + API)
+2. /figma-to-swift   → complex UI component (optional)
+3. integrate + fill business logic manually
+4. /code-review      → fix 🔴 issues
+5. /write-tests      → unit tests
+```
+
+### Quick Reference
+
+| Concern | Rule |
+|---------|------|
+| Naming | `PL` prefix on all classes/protocols/enums |
+| Colors (legacy) | `CoinsColors.xxx` |
+| Colors (new components) | `CoinsColorSet.sceneColorSet.xxx` |
+| Fonts | `CoinsFonts.xxx` — no `UIFont.systemFont` |
+| Display strings | `coinsLocalizedString("Key.Path")` |
+| Server-bound values | Plain string constants, no localization |
+| Buttons | `CoinsButton` / `CoinsV2UIButton` |
+| Weak self in closures | `[weak self]` + `guard let self` |
+| Error handling | `ErrorHandlerHelper.presentError(...)` |
+| Route path format | `/pl/module-name/page-name` (lowercase) |
+| VC base class | `PLCoinsUIViewController` (scroll: `PLCoinsAppRevampScrollViewController`) |
+| Threading | Framework handles main thread — no `DispatchQueue.main` needed |
+
