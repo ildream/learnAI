@@ -298,7 +298,7 @@ PRD：
 修改后需要调用接口保存，保存成功 toast 提示，失败弹错误。
 
 Figma 设计稿链接：https://figma.com/xxx
-（Figma MCP 自动读取，无需手动描述 UI）
+（可附加简单说明，如特殊交互逻辑、需注意的边界状态）
 
 需要的 Services：
 apiProvider、regionService
@@ -320,7 +320,7 @@ apiProvider、regionService
 组件名称：QuickPayLimitInputView
 
 Figma 设计稿链接：https://figma.com/xxx
-（Figma MCP 自动读取颜色、组件、标注）
+（可附加简单说明，如特殊交互逻辑、需注意的边界状态）
 
 交互说明：
 - 输入非数字自动过滤
@@ -543,7 +543,7 @@ Valid range: 100–50,000 PHP. Default: 5,000.
 On save: call the API, show toast on success, show error dialog on failure.
 
 Figma URL: https://figma.com/xxx
-(Figma MCP reads it automatically — no need to describe the UI manually)
+(Add brief notes if needed, e.g. edge cases or special interactions)
 
 Required services: apiProvider, regionService
 ```
@@ -564,7 +564,7 @@ Use this when a specific View is too complex to generate inline, or when you wan
 Component name: QuickPayLimitInputView
 
 Figma URL: https://figma.com/xxx
-(Figma MCP reads colors, components, and spacing automatically)
+(Add brief notes if needed, e.g. edge cases or special interactions)
 
 Interaction notes:
 - Filter out non-numeric input automatically
