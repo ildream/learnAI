@@ -492,3 +492,640 @@ let session = Session(serverTrustManager: ServerTrustManager(
 | Q11 启动优化 | 二进制重排的原理？Page Fault 怎么导致卡顿？ |
 | Q15 组件化 | 组件化后如何统一处理登录态？ |
 | Q19 网络层 | 如何防止 Token 并发刷新（多个请求同时 401）？ |
+
+---
+
+## 四、多线程专项
+
+---
+
+### Q21. 以下代码有什么问题？
+
+```swift
+class DataManager {
+    var cache: [String: Data] = [:]
+    
+    func write(key: String, data: Data) {
+        cache[key] = data
+    }
+    func read(key: String) -> Data? {
+        return cache[key]
+    }
+}
+```
+
+**问题：** `Dictionary` 是非线程安全的值类型，多线程并发读写会触发 **Data Race**，轻则数据错乱，重则 EXC_BAD_ACCESS 崩溃。
+
+**修复方案一：并发队列 + barrier（推荐，读写分离，性能好）**
+
+```swift
+class DataManager {
+    private var cache: [String: Data] = [:]
+    private let queue = DispatchQueue(label: "com.app.cache", attributes: .concurrent)
+    
+    func write(key: String, data: Data) {
+        queue.async(flags: .barrier) {   // barrier 写：独占队列
+            self.cache[key] = data
+        }
+    }
+    func read(key: String) -> Data? {
+        queue.sync {                     // 并发读：多线程可同时进
+            return cache[key]
+        }
+    }
+}
+```
+
+**修复方案二：串行队列（简单但读也串行）**
+
+```swift
+private let queue = DispatchQueue(label: "com.app.cache")
+func write(key: String, data: Data) { queue.async { self.cache[key] = data } }
+func read(key: String) -> Data? { queue.sync { cache[key] } }
+```
+
+**修复方案三：`NSLock` / `os_unfair_lock`（底层，性能最高）**
+
+```swift
+private var lock = os_unfair_lock()
+func write(key: String, data: Data) {
+    os_unfair_lock_lock(&lock)
+    defer { os_unfair_lock_unlock(&lock) }
+    cache[key] = data
+}
+```
+
+> 追问：为什么不用 `@synchronized`？（OC 遗留，底层是 `objc_sync_enter`，重量级，不推荐 Swift）
+
+---
+
+### Q22. 什么是死锁？写出会触发死锁的代码并解释原因
+
+**定义：** 两个或多个线程互相等待对方释放资源，永远无法继续执行。
+
+**典型场景一：主队列 sync 调主队列**
+
+```swift
+// 在主线程执行：
+DispatchQueue.main.sync {
+    print("这行永远不会执行")
+}
+// 分析：
+// 1. 主线程调 sync，阻塞等待 block 完成
+// 2. block 加入主队列，等主线程空闲才能执行
+// 3. 主线程被 sync 阻塞 → 永远空闲不了 → 死锁
+```
+
+**典型场景二：串行队列嵌套 sync**
+
+```swift
+let serial = DispatchQueue(label: "com.serial")
+serial.async {
+    serial.sync {    // 在自己队列里 sync 等自己 → 死锁
+        print("死锁")
+    }
+}
+```
+
+**典型场景三：锁的重入**
+
+```swift
+let lock = NSLock()
+lock.lock()
+lock.lock()   // 同一线程二次加锁 → 死锁（NSLock 不支持重入，用 NSRecursiveLock）
+```
+
+> 追问：`NSRecursiveLock` 和 `NSLock` 区别？（前者支持同一线程多次加锁）
+
+---
+
+### Q23. GCD 的各种队列和提交方式，组合起来有多少种执行方式？
+
+| 队列类型 | async | sync |
+|--------|-------|------|
+| **主队列**（串行） | 在主线程异步执行 | ⚠️ 主线程调用会死锁 |
+| **自建串行队列** | 开子线程，FIFO 串行执行 | 阻塞当前线程，在串行队列执行 |
+| **全局并发队列** | 开多个子线程并发执行 | 阻塞当前线程，并发执行 |
+
+**`DispatchGroup` 监听多任务完成：**
+
+```swift
+let group = DispatchGroup()
+let queue = DispatchQueue.global()
+
+group.enter()
+queue.async {
+    // 任务一
+    group.leave()
+}
+group.enter()
+queue.async {
+    // 任务二
+    group.leave()
+}
+group.notify(queue: .main) {
+    // 两个任务都完成后，主线程更新 UI
+}
+```
+
+**`DispatchSemaphore` 控制并发数：**
+
+```swift
+let semaphore = DispatchSemaphore(value: 3)   // 最多3个并发
+for _ in 0..<10 {
+    DispatchQueue.global().async {
+        semaphore.wait()       // 占一个名额
+        defer { semaphore.signal() }
+        // 执行任务
+    }
+}
+```
+
+---
+
+### Q24. `async/await` 和 GCD 的核心区别？什么是结构化并发？
+
+**核心区别：**
+
+```swift
+// GCD：回调地狱，错误处理分散
+fetchUser { user in
+    fetchOrders(user) { orders in
+        fetchDetails(orders.first) { detail in
+            // 嵌套越来越深...
+        }
+    }
+}
+
+// async/await：线性代码，可读性高
+let user = try await fetchUser()
+let orders = try await fetchOrders(user)
+let detail = try await fetchDetails(orders.first)
+```
+
+**结构化并发（Swift Concurrency）：**
+
+```swift
+// Task 继承父任务的生命周期
+async let user = fetchUser()
+async let orders = fetchOrders()
+let (u, o) = try await (user, orders)   // 并发执行，同时等待
+
+// TaskGroup：动态数量的并发任务
+await withTaskGroup(of: Image.self) { group in
+    for url in urls {
+        group.addTask { await downloadImage(url) }
+    }
+    for await image in group { images.append(image) }
+}
+```
+
+**Actor：解决数据竞争**
+
+```swift
+actor DataCache {
+    private var cache: [String: Data] = [:]
+    func write(key: String, data: Data) { cache[key] = data }
+    func read(key: String) -> Data? { cache[key] }
+}
+// Actor 保证方法串行执行，无需手动加锁
+let cache = DataCache()
+await cache.write(key: "key", data: data)
+```
+
+> `MainActor` 等价于主线程，`@MainActor` 标记的属性/方法保证在主线程执行。
+
+---
+
+### Q25. 线程安全的单例如何实现？OC 和 Swift 各有什么写法？
+
+**Swift（最简洁，语言级别保证线程安全）：**
+
+```swift
+class NetworkManager {
+    static let shared = NetworkManager()
+    private init() {}
+}
+```
+
+> Swift 的 `static let` 底层使用 `dispatch_once` 实现，线程安全，且是懒加载。
+
+**OC（dispatch_once）：**
+
+```objc
++ (instancetype)shared {
+    static NetworkManager *instance;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        instance = [[self alloc] init];
+    });
+    return instance;
+}
+```
+
+**追问：单例的缺点？**
+- 全局状态，难以测试（无法 mock）
+- 隐式依赖，降低模块内聚性
+- 多线程下内部状态需要额外保护
+- 建议：能用依赖注入替代的，尽量不用单例
+
+---
+
+## 五、第三方库设计思想
+
+---
+
+### Q26. SDWebImage 的设计思想与核心实现
+
+**整体架构：**
+
+```
+UIImageView+WebCache（入口）
+    ↓
+SDWebImageManager（协调者）
+    ├── SDImageCache（缓存层）
+    │     ├── NSCache（内存，LRU）
+    │     └── 磁盘（文件系统，MD5 命名）
+    └── SDWebImageDownloader（下载层）
+          └── NSURLSession + Operation Queue
+```
+
+**核心设计点（面试考察点）：**
+
+**1. 两级缓存策略**
+
+```
+请求图片 → 查内存缓存（NSCache，快）→ 命中直接返回
+           → 未命中 → 查磁盘缓存（异步IO）→ 命中则写入内存再返回
+           → 未命中 → 发起网络下载 → 写磁盘 + 写内存
+```
+
+**2. 防重复下载（Operation 复用）**
+
+```swift
+// 同一 URL 的多次请求，只发一次网络请求
+// 下载完成后回调所有等待的 completionBlock
+downloadOperations[url]?.addHandlers(...)   // 复用已有 Operation
+```
+
+**3. 图片解码在子线程**
+
+下载完成后，在后台线程将 `Data → UIImage`（`CGImageCreate`），解码完成再传给主线程，避免主线程解码卡顿。
+
+**4. UIImageView 的 AssociatedObject**
+
+`UIImageView+WebCache` 通过关联对象存储当前正在加载的 URL，切换图片时取消上一个请求，防止复用 cell 图片错乱。
+
+```swift
+// cell 复用时的图片错乱根因：
+// 快速滚动 → 同一个 cell 发出多个下载请求 → 后到的图片覆盖先到的
+// SDWebImage 解法：每次 setImage 先 cancel 之前的 operation
+```
+
+**5. 磁盘缓存清理策略**
+
+- LRU（Least Recently Used）：优先删除最久未访问的文件
+- 可配置最大容量 + 最长保留时间
+
+> 追问：如果让你设计一个图片缓存，内存缓存用什么数据结构实现 LRU？（链表 + 哈希表，`NSCache` 帮你做了）
+
+---
+
+### Q27. AFNetworking 的设计思想
+
+> Swift 项目中 AFNetworking 已被 Alamofire 取代，两者设计思想一脉相承。
+
+**核心架构：**
+
+```
+AFHTTPSessionManager（业务入口）
+    ↓
+AFURLSessionManager（URLSession 封装）
+    ├── AFURLRequestSerialization（请求序列化）
+    ├── AFURLResponseSerialization（响应反序列化）
+    ├── AFSecurityPolicy（SSL 证书校验）
+    └── AFNetworkReachabilityManager（网络状态监测）
+```
+
+**核心设计点：**
+
+**1. 责任链 / 管道思想**
+
+```
+原始 Request → RequestSerializer（加 Header、编码参数）
+             → URLSession 发送
+             → ResponseSerializer（JSON解析/数据验证）
+             → 回调业务层
+```
+每一环职责单一，可独立替换，符合开闭原则。
+
+**2. 委托转通知（N:1 → 1:N）**
+
+`NSURLSession` 的 delegate 是 1:1 的，AFNetworking 内部把 delegate 回调转成通知，允许多个 observer 监听同一事件。
+
+**3. 请求/响应序列化协议化**
+
+```objc
+@protocol AFURLRequestSerialization <NSObject>
+- (NSURLRequest *)requestBySerializingRequest:(NSURLRequest *)request
+                               withParameters:(id)parameters
+                                        error:(NSError **)error;
+@end
+```
+业务可以自定义序列化器，完全解耦。
+
+**4. `completionGroup` + `completionQueue`**
+
+允许指定回调在哪个 GCD queue 和 group 执行，让调用方灵活控制线程。
+
+> 追问：AFNetworking 3.x 为什么废弃了 `NSURLConnection`？（iOS 9 后苹果全面推 URLSession，支持 HTTP/2，后台传输更强）
+
+---
+
+### Q28. SnapKit 的设计思想
+
+**核心思想：DSL（领域特定语言）+ Builder 模式**
+
+```swift
+view.snp.makeConstraints { make in
+    make.top.equalToSuperview().offset(16)
+    make.leading.trailing.equalToSuperview().inset(16)
+    make.height.equalTo(52)
+}
+```
+
+**1. 链式调用（Fluent Interface）**
+
+每个约束方法返回 `ConstraintMakerEditable`，使链式调用成为可能：
+
+```swift
+// 等价写法：
+make.top.equalToSuperview().offset(16)
+// 内部：
+// make.top → ConstraintMakerEditable
+// .equalToSuperview() → 设置 relatedBy = .equal，返回 self
+// .offset(16) → 设置 constant，返回 self
+```
+
+**2. 对 Auto Layout 的完整封装**
+
+```swift
+// SnapKit 三个入口
+view.snp.makeConstraints { }   // 新建约束
+view.snp.updateConstraints { } // 更新已有约束的 constant
+view.snp.remakeConstraints { } // 清除全部重建（动画时常用）
+```
+
+**3. 约束存储与更新**
+
+SnapKit 用关联对象（AssociatedObject）将约束信息挂在 view 上，`updateConstraints` 时精确找到并修改对应约束，不会重复创建。
+
+**4. 追问：`makeConstraints` vs `updateConstraints` vs `remakeConstraints` 的区别？**
+
+| 方法 | 行为 | 适用场景 |
+|------|------|---------|
+| `makeConstraints` | 添加新约束 | 首次布局 |
+| `updateConstraints` | 只更新已有约束的 constant | 动态改变间距/尺寸 |
+| `remakeConstraints` | 清除所有约束后重建 | 布局结构发生变化 |
+
+**5. 追问：SnapKit 和 Masonry 的关系？**
+
+Masonry 是 OC 版本，SnapKit 是 Swift 版本，设计思路完全一致，是同一套理念的不同语言实现。
+
+---
+
+## 六、Swift 底层进阶
+
+---
+
+### Q29. Swift 的方法派发机制：静态派发 vs 动态派发
+
+**三种派发方式：**
+
+| 派发方式 | 性能 | 适用场景 |
+|---------|------|---------|
+| **静态派发（直接调用）** | 最快，可内联 | `struct/enum` 方法、`final class`、`private` 方法 |
+| **函数表派发（V-Table）** | 较快 | `class` 非 final 方法 |
+| **消息派发（objc_msgSend）** | 最慢 | `@objc dynamic` 标记的方法 |
+
+```swift
+class Animal {
+    func eat() {}              // V-Table 派发
+    final func sleep() {}      // 静态派发（final 阻止重写）
+    @objc dynamic func run() {} // 消息派发（支持 runtime hook）
+}
+
+struct Point {
+    func move() {}             // 静态派发（struct 不能继承）
+}
+```
+
+**为什么 Protocol 方法也可能动态派发？**
+
+```swift
+protocol Drawable {
+    func draw()
+}
+extension Drawable {
+    func draw() { print("default") }  // 静态派发（extension 不进 protocol witness table）
+}
+
+class Circle: Drawable {
+    func draw() { print("circle") }   // witness table 派发
+}
+
+let d: Drawable = Circle()
+d.draw()  // 调用 Circle 的实现（witness table）
+
+let c = Circle()
+c.draw()  // 若 Circle 不继承其他类 → 静态派发（编译器可优化）
+```
+
+> 追问：`@objc dynamic` 有什么实际用途？（KVO 观察属性必须用 `@objc dynamic`，因为 KVO 底层通过 runtime 替换 setter）
+
+---
+
+### Q30. Swift 泛型的底层实现：类型擦除 vs 不透明类型
+
+**泛型实例化（Specialization）：**
+
+```swift
+func max<T: Comparable>(_ a: T, _ b: T) -> T { a > b ? a : b }
+
+// 编译器对每种具体类型生成特化版本：
+// max<Int>(_:_:)   → 直接操作 Int，无装箱
+// max<Double>(_:_:) → 直接操作 Double
+```
+
+**类型擦除（`any Protocol`）：**
+
+```swift
+// Swift 5.7 之前：用 AnyPublisher、AnyView 等包装类做类型擦除
+func makeAnimal() -> any Animal { Dog() }  // 运行时确定具体类型，有装箱开销
+
+// 内部机制：ExistentialContainer（存在类型容器）
+// [valueBuffer(3 words) | metadata | witness table]
+// 小对象内联存储，大对象堆分配
+```
+
+**不透明类型（`some Protocol`）：**
+
+```swift
+// Swift 5.1 引入，编译器确定唯一具体类型，性能等同泛型
+func makeAnimal() -> some Animal { Dog() }  // 类型在编译期固定
+```
+
+**关键区别：**
+
+```swift
+// any Animal：调用方不知道具体类型，运行时多态，有开销
+// some Animal：编译器知道具体类型，静态派发，无开销，但只能返回同一种类型
+```
+
+---
+
+### Q31. `@propertyWrapper` 实现原理与实战
+
+**本质：** 编译器将 `@Xxx var foo` 展开为包含 `wrappedValue` 访问器的代码，是语法糖。
+
+```swift
+@propertyWrapper
+struct Clamped<T: Comparable> {
+    private var value: T
+    let range: ClosedRange<T>
+    
+    var wrappedValue: T {
+        get { value }
+        set { value = min(max(newValue, range.lowerBound), range.upperBound) }
+    }
+    init(wrappedValue: T, _ range: ClosedRange<T>) {
+        self.range = range
+        self.value = min(max(wrappedValue, range.lowerBound), range.upperBound)
+    }
+}
+
+struct Player {
+    @Clamped(0...100) var health: Int = 100
+}
+
+var p = Player()
+p.health = 150    // 自动 clamp 为 100
+p.health = -10    // 自动 clamp 为 0
+```
+
+**`projectedValue`（`$`前缀访问）：**
+
+```swift
+@propertyWrapper
+struct Published<T> {
+    var wrappedValue: T
+    var projectedValue: AnyPublisher<T, Never> { subject.eraseToAnyPublisher() }
+    private let subject = PassthroughSubject<T, Never>()
+}
+
+@Published var name: String = ""
+$name.sink { print($0) }  // $name 访问 projectedValue
+```
+
+---
+
+### Q32. Swift 的内存模型：栈、堆与 COW
+
+**值类型（栈/内联）：**
+
+```swift
+struct Point { var x, y: Double }
+var p1 = Point(x: 1, y: 2)
+var p2 = p1    // 值拷贝，互不影响（若在函数内，分配在栈上）
+```
+
+**引用类型（堆）：**
+
+```swift
+class Node { var value: Int; init(_ v: Int) { value = v } }
+var n1 = Node(1)
+var n2 = n1    // 浅拷贝，共享同一堆对象
+```
+
+**Copy-on-Write（COW）机制：**
+
+```swift
+var a = [1, 2, 3]
+var b = a              // 不立即拷贝，共享底层 buffer
+b.append(4)            // 触发写操作 → 检测引用计数 > 1 → 深拷贝 buffer
+
+// 手动实现 COW：
+struct MyArray<T> {
+    private var storage: Storage<T>
+    
+    mutating func append(_ value: T) {
+        if !isKnownUniquelyReferenced(&storage) {
+            storage = storage.copy()  // 发现共享 → 先复制
+        }
+        storage.append(value)
+    }
+}
+```
+
+**堆分配触发场景（易考）：**
+- `class` 实例
+- 含 `class` 属性的 `struct`（间接引用）
+- 闭包捕获变量
+- `any Protocol`（ExistentialContainer 超过3 word 时）
+- `Array/Dictionary/String` 的底层 buffer
+
+---
+
+### Q33. Combine / Swift Concurrency 对比
+
+**Combine（响应式）：**
+
+```swift
+$searchText
+    .debounce(for: .milliseconds(300), scheduler: RunLoop.main)
+    .removeDuplicates()
+    .flatMap { text in self.search(text) }
+    .sink { results in self.results = results }
+    .store(in: &cancellables)
+```
+
+**Swift Concurrency（结构化并发）：**
+
+```swift
+func search(_ text: String) async throws -> [Result] {
+    try await Task.sleep(nanoseconds: 300_000_000)
+    return try await api.search(text)
+}
+
+// 在 Task 中调用
+Task {
+    for await text in $searchText.values {
+        results = try await search(text)
+    }
+}
+```
+
+**对比：**
+
+| | Combine | Swift Concurrency |
+|---|---|---|
+| 学习曲线 | 较陡（操作符多） | 较平（接近同步代码） |
+| 错误处理 | `.catch` / `.replaceError` | `try/catch`（自然） |
+| 取消 | `.cancel()` | `Task.cancel()` |
+| 背压（Backpressure）| ✅ | ❌（AsyncStream 有限支持） |
+| 最低系统版本 | iOS 13 | iOS 15 |
+| 适合场景 | 复杂事件流、UI 绑定 | 异步请求、业务逻辑 |
+
+> 追问：`AsyncStream` 是什么？如何桥接回调 API 到 async/await？（`withCheckedContinuation`）
+
+---
+
+## 附录（补充追问）
+
+| 题目 | 进阶追问 |
+|------|---------|
+| Q21 线程安全字典 | `os_unfair_lock` 和 `NSLock` 性能差多少？（前者是自旋锁优化版，后者是互斥锁）|
+| Q24 Actor | `@MainActor` 和 `DispatchQueue.main.async` 等价吗？（不完全等价，Actor 是协作式调度）|
+| Q26 SDWebImage | 为什么磁盘缓存用 MD5 做文件名？（URL 可能含非法字符，且 MD5 长度固定）|
+| Q29 方法派发 | `protocol extension` 里的方法为什么不走 witness table？（extension 不能被 override，编译器静态确定）|
+| Q32 COW | `isKnownUniquelyReferenced` 只能用于 class，为什么？（引用计数是 class 的概念，struct 没有）|
